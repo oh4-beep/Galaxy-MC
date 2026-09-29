@@ -1,0 +1,17 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "equipment",
+  "pattern": [
+    "T T",
+    "TWT",
+    "TTT"
+  ],
+  "key": {
+    "T": "galaxy_mc:titanium_ingot",
+    "W": "#minecraft:wool"
+  },
+  "result": {
+    "id": "galaxy_mc:space_chestplate",
+    "count": 1
+  }
+}

@@ -1,0 +1,20 @@
+{
+  "replace": false,
+  "values": [
+    "galaxy_mc:lunar_titanium_ore",
+    "galaxy_mc:venus_sulfur_ore",
+    "galaxy_mc:methane_clathrate_ore",
+    "galaxy_mc:alien_iron_ore",
+    "galaxy_mc:alien_copper_ore",
+    "galaxy_mc:alien_lapis_ore",
+    "galaxy_mc:titanium_block",
+    "galaxy_mc:hull_plating",
+    "galaxy_mc:hull_plating_dark",
+    "galaxy_mc:hull_stripe",
+    "galaxy_mc:ship_floor",
+    "galaxy_mc:airlock_door",
+    "galaxy_mc:navigation_console",
+    "galaxy_mc:life_support",
+    "galaxy_mc:fuel_block"
+  ]
+}

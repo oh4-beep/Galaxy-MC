@@ -1,0 +1,7 @@
+{
+  "parent": "minecraft:block/cube_column",
+  "textures": {
+    "end": "galaxy_mc:block/fuel_block_top",
+    "side": "galaxy_mc:block/fuel_block_side"
+  }
+}

@@ -1,0 +1,6 @@
+{
+  "parent": "minecraft:block/cross",
+  "textures": {
+    "cross": "galaxy_mc:block/ember_bloom"
+  }
+}

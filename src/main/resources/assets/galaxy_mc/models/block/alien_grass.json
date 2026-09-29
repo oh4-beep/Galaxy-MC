@@ -1,0 +1,9 @@
+{
+  "parent": "galaxy_mc:block/tinted_grass_block",
+  "textures": {
+    "top": "galaxy_mc:block/alien_grass_top",
+    "side": "galaxy_mc:block/alien_grass_side",
+    "bottom": "galaxy_mc:block/alien_grass_bottom",
+    "overlay": "galaxy_mc:block/alien_grass_side_overlay"
+  }
+}

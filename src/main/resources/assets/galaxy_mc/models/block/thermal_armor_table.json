@@ -1,0 +1,8 @@
+{
+  "parent": "minecraft:block/cube_bottom_top",
+  "textures": {
+    "top": "galaxy_mc:block/thermal_armor_table_top",
+    "side": "galaxy_mc:block/thermal_armor_table_side",
+    "bottom": "galaxy_mc:block/thermal_armor_table_bottom"
+  }
+}

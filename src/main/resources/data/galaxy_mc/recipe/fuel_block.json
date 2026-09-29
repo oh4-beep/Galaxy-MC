@@ -1,0 +1,16 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "building",
+  "pattern": [
+    "###",
+    "###",
+    "###"
+  ],
+  "key": {
+    "#": "galaxy_mc:rocket_fuel_canister"
+  },
+  "result": {
+    "id": "galaxy_mc:fuel_block",
+    "count": 1
+  }
+}

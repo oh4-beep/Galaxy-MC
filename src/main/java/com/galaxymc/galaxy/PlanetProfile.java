@@ -25,6 +25,14 @@ public final class PlanetProfile {
         public Palette withAlt(BlockState alt) {
             return new Palette(top, under, stone, deep, fluid, fluidCap, shore, snow, underDepth, alt);
         }
+
+        public Palette withSnow(BlockState snow) {
+            return new Palette(top, under, stone, deep, fluid, fluidCap, shore, snow, underDepth, alt);
+        }
+
+        public Palette withStone(BlockState stone, BlockState deep) {
+            return new Palette(top, under, stone, deep, fluid, fluidCap, shore, snow, underDepth, alt);
+        }
     }
 
     /**
@@ -32,6 +40,42 @@ public final class PlanetProfile {
      * Fractional attempts are a per-chunk chance, so very rare ores can be expressed directly.
      */
     public record OreSpec(BlockState ore, BlockState deepOre, double attempts, int size, int minY, int maxY) {}
+
+    /**
+     * Inland lakes, independent of sea level. Each basin holds {@code fluid} (water, lava, or a solid
+     * block such as packed ice for lakes frozen to the bottom); {@code cap} is an optional surface crust
+     * (ice over water, obsidian skins on lava). A fraction {@code secondMix} of basins uses the second
+     * fluid instead, which is how a cold volcanic world gets both frozen lakes and lava pools. A null
+     * fluid makes dry basins: salt flats floored with {@code bed}.
+     */
+    public record Lakes(BlockState fluid, BlockState cap, BlockState shore, BlockState bed, double chance,
+                        BlockState fluid2, BlockState cap2, BlockState shore2, double secondMix, double scale) {
+        public Lakes(BlockState fluid, BlockState cap, BlockState shore, BlockState bed, double chance,
+                     BlockState fluid2, BlockState cap2, BlockState shore2, double secondMix) {
+            this(fluid, cap, shore, bed, chance, fluid2, cap2, shore2, secondMix, 1.0);
+        }
+
+        public static Lakes of(BlockState fluid, BlockState cap, BlockState shore, double chance) {
+            return new Lakes(fluid, cap, shore, shore, chance, null, null, null, 0.0, 1.0);
+        }
+
+        public Lakes dry(BlockState bed) {
+            return new Lakes(null, null, shore, bed, chance, fluid2, cap2, shore2, secondMix, scale);
+        }
+
+        public Lakes mixed(BlockState f2, BlockState c2, BlockState s2, double mix) {
+            return new Lakes(fluid, cap, shore, bed, chance, f2, c2, s2, mix, scale);
+        }
+
+        /** Great lakes: basins (and the cells they are spread over) scaled up by {@code factor}. */
+        public Lakes scaled(double factor) {
+            return new Lakes(fluid, cap, shore, bed, chance, fluid2, cap2, shore2, secondMix, factor);
+        }
+
+        public Lakes withChance(double c) {
+            return new Lakes(fluid, cap, shore, bed, c, fluid2, cap2, shore2, secondMix, scale);
+        }
+    }
 
     public final String id;
     public final String name;
@@ -65,6 +109,18 @@ public final class PlanetProfile {
     public final boolean giantBurrows;
     public final List<String> fauna;
     public final String description;
+    /** 0 = no ranges at all, 1 = alpine, 1.4 = titanic peaks brushing the build limit. */
+    public final double mountains;
+    /** Slope (blocks of rise per block) beyond which bare rock shows through the surface. */
+    public final double cliffSlope;
+    /** -1 (basalt-black worlds) .. +1 (chalk-white worlds). Drives stone tint and palette choice. */
+    public final double brightness;
+    /** Inland lakes, or null for none. */
+    public final Lakes lakes;
+    /** Rock strata exposed in cliffs and canyon walls, bottom to top; null for plain stone. */
+    public final BlockState[] strata;
+    /** Tint of the dust layer (alien sand, regolith, soil) on the client. */
+    public final int dustTint;
 
     private PlanetProfile(Builder b) {
         this.id = b.id;
@@ -99,6 +155,12 @@ public final class PlanetProfile {
         this.giantBurrows = b.giantBurrows;
         this.fauna = List.copyOf(b.fauna);
         this.description = b.description;
+        this.mountains = b.mountains;
+        this.cliffSlope = b.cliffSlope;
+        this.brightness = b.brightness;
+        this.lakes = b.lakes;
+        this.strata = b.strata == null ? null : b.strata.clone();
+        this.dustTint = b.dustTint;
     }
 
     public boolean isFrontier() {
@@ -148,6 +210,14 @@ public final class PlanetProfile {
         private boolean giantBurrows = false;
         private final List<String> fauna = new ArrayList<>();
         private String description = "";
+        private double mountains = 0.0;
+        private double cliffSlope = 1.6;
+        private double brightness = 0.0;
+        private Lakes lakes;
+        private BlockState[] strata;
+        private int dustTint = 0xffffff;
+        private String mountainText;
+        private String lakeText;
 
         private Builder(String id, String name, PlanetType type, long seed) {
             this.id = id;
@@ -183,6 +253,24 @@ public final class PlanetProfile {
         public Builder fauna(List<String> v) { fauna.clear(); fauna.addAll(v); return this; }
         public Builder fauna(String... v) { fauna.clear(); fauna.addAll(List.of(v)); return this; }
         public Builder description(String v) { description = v; return this; }
+        public Builder mountains(double v) { mountains = v; return this; }
+        public Builder cliffs(double slope) { cliffSlope = slope; return this; }
+        public Builder brightness(double v) { brightness = v; return this; }
+        public Builder lakes(Lakes v) { lakes = v; return this; }
+        public Builder strata(BlockState... v) { strata = v; return this; }
+        public Builder dust(int tint) { dustTint = tint; return this; }
+        public Builder stoneTint(int tint) { stoneTint = tint; return this; }
+        public Builder describeMountains(String v) { mountainText = v; return this; }
+        public Builder describeLakes(String v) { lakeText = v; return this; }
+        public String describedMountains() { return mountainText; }
+        public String describedLakes() { return lakeText; }
+        public int grassColor() { return grassColor; }
+        public PlanetType type() { return type; }
+        public double baseTemp() { return baseTemp; }
+        public int snowLine() { return snowLine; }
+        public int baseHeight() { return baseHeight; }
+        public int seaLevel() { return seaLevel; }
+        public Palette palette() { return palette; }
 
         public PlanetProfile build() {
             return new PlanetProfile(this);

@@ -1,0 +1,7 @@
+{
+  "parent": "minecraft:item/generated",
+  "textures": {
+    "layer0": "galaxy_mc:item/exotic_mineral",
+    "layer1": "galaxy_mc:item/exotic_mineral_overlay"
+  }
+}

@@ -1,0 +1,19 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": [
+    "WCI",
+    "PPP",
+    "P P"
+  ],
+  "key": {
+    "W": "#minecraft:wool",
+    "C": "minecraft:crafting_table",
+    "I": "minecraft:ice",
+    "P": "#minecraft:planks"
+  },
+  "result": {
+    "id": "galaxy_mc:thermal_armor_table",
+    "count": 1
+  }
+}

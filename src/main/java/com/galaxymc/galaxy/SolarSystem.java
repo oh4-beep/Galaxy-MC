@@ -94,7 +94,8 @@ public final class SolarSystem {
                 .ore(ore(ModBlocks.MOON_CHEESE_BLOCK, 0.04, 6, 0, 60))
                 .ore(new OreSpec(exotic, deepExotic, 2, 5, -60, 90))
                 .caves(1.1, 2, false).biome(0).colors(0x9a9a9a, 0x9a9a9a, 0xb0c8ff, 0xffffff)
-                .description("Airless grey craters under a black sky.").build());
+                .mountains(0.3).cliffs(1.4)
+                .description("Airless grey craters under a black sky, ringed by the lunar highlands.").build());
 
         PROFILES.put("mars", PlanetProfile.builder("mars", "Mars", PlanetType.CANYON, seed("mars"))
                 .temp(-55, 30).gravity(0.38).terrain(92, 46, 1.0).snowLine(168).atmosphere(true).orbit(1.52).tier(1).danger(3)
@@ -103,7 +104,11 @@ public final class SolarSystem {
                 .ore(ore(ModBlocks.MARS_COBALT_ORE, 8, 8, -60, 120))
                 .ore(new OreSpec(exotic, deepExotic, 2, 5, -60, 90))
                 .caves(1.0, 3, true).biome(1).colors(0xb5552c, 0x8a3a1a, 0xff8060, 0xffffff)
-                .description("A frozen red desert of canyons and dust.").build());
+                .mountains(0.55).cliffs(1.3)
+                .strata(s(ModBlocks.MARS_ROCK), s(ModBlocks.MARS_DEEP_ROCK), s(ModBlocks.MARS_ROCK), s(Blocks.TERRACOTTA),
+                        s(ModBlocks.MARS_ROCK), s(ModBlocks.MARS_DEEP_ROCK))
+                .lakes(PlanetProfile.Lakes.of(s(ModBlocks.MARS_POLAR_ICE), null, s(ModBlocks.MARS_SAND), 0.22))
+                .description("A frozen red desert of canyons, dust and buried ice lakes.").build());
 
         PROFILES.put("venus", PlanetProfile.builder("venus", "Venus", PlanetType.ASH, seed("venus"))
                 .temp(440, 6).gravity(0.9).terrain(58, 34, 1.0).sea(50).atmosphere(true).orbit(0.72).tier(2).danger(5)
@@ -113,7 +118,10 @@ public final class SolarSystem {
                 .ore(ore(ModBlocks.SULFUR_BLOCK, 1.5, 12, 30, 120))
                 .ore(new OreSpec(exotic, deepExotic, 2.5, 5, -60, 90))
                 .caves(0.8, 2, false).biome(2).colors(0xc8a050, 0x9a7a3a, 0xffd060, 0xffffff)
-                .description("Crushing heat and sulfur haze over rivers of lava.").build());
+                .mountains(0.6).cliffs(1.3)
+                .lakes(new PlanetProfile.Lakes(s(Blocks.LAVA), s(Blocks.BASALT), s(ModBlocks.VENUS_BASALT), s(Blocks.MAGMA_BLOCK),
+                        0.5, null, null, null, 0.0))
+                .description("Crushing heat and sulfur haze over rivers and lakes of lava.").build());
 
         PROFILES.put("mercury", PlanetProfile.builder("mercury", "Mercury", PlanetType.CRATERED, seed("mercury"))
                 .temp(80, 250).gravity(0.38).terrain(74, 26, 1.2).atmosphere(false).orbit(0.39).tier(2).danger(5)
@@ -122,6 +130,7 @@ public final class SolarSystem {
                 .ore(ore(ModBlocks.MERCURY_IRIDIUM_ORE, 6, 6, -60, 100))
                 .ore(new OreSpec(exotic, deepExotic, 2.5, 5, -60, 90))
                 .caves(1.0, 2, false).biome(3).colors(0x6e6760, 0x6e6760, 0xffc080, 0xffffff)
+                .mountains(0.25).cliffs(1.3)
                 .description("Scorching days, killing nights.").build());
 
         PROFILES.put("sun", PlanetProfile.builder("sun", "The Sun", PlanetType.STELLAR, seed("sun"))
@@ -160,6 +169,9 @@ public final class SolarSystem {
                 .ore(ore(ModBlocks.VENUS_SULFUR_ORE, 6, 8, -60, 130))
                 .ore(new OreSpec(exotic, deepExotic, 2.5, 5, -60, 90))
                 .caves(0.9, 2, false).biome(7).colors(0xe0d040, 0xb0a020, 0xff6020, 0xffffff)
+                .mountains(0.45).cliffs(1.4)
+                .lakes(new PlanetProfile.Lakes(s(Blocks.LAVA), s(Blocks.BASALT), s(Blocks.BASALT), s(Blocks.MAGMA_BLOCK),
+                        0.6, null, null, null, 0.0))
                 .description("Sulfur plains and lava lakes.").build());
 
         PROFILES.put("titan", PlanetProfile.builder("titan", "Titan", PlanetType.TUNDRA, seed("titan"))
@@ -169,7 +181,9 @@ public final class SolarSystem {
                 .ore(ore(ModBlocks.METHANE_CLATHRATE_ORE, 10, 8, -60, 120))
                 .ore(new OreSpec(exotic, deepExotic, 2.5, 5, -60, 90))
                 .caves(1.0, 2, true).biome(8).colors(0x8a5a2e, 0x6a4020, 0xffa040, 0xffffff)
-                .description("Methane seas under an orange sky.").build());
+                .mountains(0.2)
+                .lakes(PlanetProfile.Lakes.of(s(Blocks.WATER), null, s(ModBlocks.TITAN_SEDIMENT), 0.55))
+                .description("Methane seas and lakes under an orange sky.").build());
 
         PROFILES.put("saturn", PlanetProfile.builder("saturn", "Saturn's Rings", PlanetType.SHATTERED, seed("saturn"))
                 .temp(-180, 0).gravity(0.2).terrain(100, 60, 1.0).atmosphere(false).orbit(9.5).tier(3).danger(5)
@@ -189,7 +203,9 @@ public final class SolarSystem {
                 .ore(ore(ModBlocks.PLUTONITE_ORE, 3, 5, -60, 90))
                 .ore(new OreSpec(exotic, deepExotic, 3, 6, -60, 90))
                 .caves(1.0, 2, false).biome(10).colors(0xe0d8d0, 0x9a6050, 0xa0ffa0, 0xffffff)
-                .description("The frozen edge of Sol.").build());
+                .mountains(0.75).cliffs(1.5)
+                .lakes(PlanetProfile.Lakes.of(s(ModBlocks.NITROGEN_ICE), null, s(ModBlocks.THOLIN_DUST), 0.35))
+                .description("The frozen edge of Sol: water-ice mountains over plains of nitrogen glacier.").build());
     }
 
     public static List<String> ids() {

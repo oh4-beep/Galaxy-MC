@@ -4,6 +4,7 @@ import com.galaxymc.climate.ThermalData;
 import com.galaxymc.mineral.MineralData;
 import com.galaxymc.mineral.Infusions;
 import com.galaxymc.item.RelicData;
+import net.fabricmc.fabric.api.item.v1.ItemComponentTooltipProviderRegistry;
 import net.minecraft.core.Registry;
 import net.minecraft.core.component.DataComponentType;
 import net.minecraft.core.registries.BuiltInRegistries;
@@ -29,5 +30,10 @@ public final class ModComponents {
                     .persistent(RelicData.CODEC).networkSynchronized(RelicData.STREAM_CODEC).build());
 
     public static void init() {
+        // Custom components only reach the tooltip when registered with Fabric's tooltip provider list.
+        ItemComponentTooltipProviderRegistry.addLast(THERMAL);
+        ItemComponentTooltipProviderRegistry.addLast(MINERAL);
+        ItemComponentTooltipProviderRegistry.addLast(INFUSIONS);
+        ItemComponentTooltipProviderRegistry.addLast(RELIC);
     }
 }

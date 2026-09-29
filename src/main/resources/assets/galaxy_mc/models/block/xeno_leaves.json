@@ -1,0 +1,6 @@
+{
+  "parent": "minecraft:block/leaves",
+  "textures": {
+    "all": "galaxy_mc:block/xeno_leaves"
+  }
+}

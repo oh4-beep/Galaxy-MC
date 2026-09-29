@@ -1,0 +1,19 @@
+{
+  "replace": false,
+  "values": [
+    "galaxy_mc:mars_cobalt_ore",
+    "galaxy_mc:mercury_iridium_ore",
+    "galaxy_mc:storm_crystal_ore",
+    "galaxy_mc:cryonite_ore",
+    "galaxy_mc:pyrocite_ore",
+    "galaxy_mc:exotic_ore",
+    "galaxy_mc:alien_gold_ore",
+    "galaxy_mc:alien_redstone_ore",
+    "galaxy_mc:alien_diamond_ore",
+    "galaxy_mc:alien_emerald_ore",
+    "galaxy_mc:cobalt_block",
+    "galaxy_mc:iridium_block",
+    "galaxy_mc:stellar_forge",
+    "galaxy_mc:thruster"
+  ]
+}

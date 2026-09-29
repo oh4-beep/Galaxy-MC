@@ -1,0 +1,22 @@
+{
+  "description": {
+    "translate": "enchantment.galaxy_mc.fuel_efficiency"
+  },
+  "supported_items": "#galaxy_mc:fuel_enchantable",
+  "primary_items": "#galaxy_mc:fuel_enchantable",
+  "weight": 10,
+  "max_level": 5,
+  "min_cost": {
+    "base": 1,
+    "per_level_above_first": 7
+  },
+  "max_cost": {
+    "base": 51,
+    "per_level_above_first": 7
+  },
+  "anvil_cost": 2,
+  "slots": [
+    "any"
+  ],
+  "effects": {}
+}

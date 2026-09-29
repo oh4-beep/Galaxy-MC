@@ -1,0 +1,15 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "building",
+  "pattern": [
+    "##",
+    "##"
+  ],
+  "key": {
+    "#": "galaxy_mc:alien_stone"
+  },
+  "result": {
+    "id": "galaxy_mc:alien_stone_bricks",
+    "count": 4
+  }
+}

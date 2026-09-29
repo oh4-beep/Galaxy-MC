@@ -1,0 +1,11 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "building",
+  "ingredients": [
+    "galaxy_mc:xeno_log"
+  ],
+  "result": {
+    "id": "galaxy_mc:xeno_planks",
+    "count": 4
+  }
+}

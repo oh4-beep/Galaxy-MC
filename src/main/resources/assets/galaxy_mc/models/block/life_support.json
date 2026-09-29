@@ -1,0 +1,8 @@
+{
+  "parent": "minecraft:block/cube_bottom_top",
+  "textures": {
+    "top": "galaxy_mc:block/life_support_top",
+    "side": "galaxy_mc:block/life_support_side",
+    "bottom": "galaxy_mc:block/life_support_bottom"
+  }
+}

@@ -1,0 +1,12 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "building",
+  "ingredients": [
+    "galaxy_mc:hull_plating",
+    "minecraft:glowstone"
+  ],
+  "result": {
+    "id": "galaxy_mc:ship_light",
+    "count": 1
+  }
+}

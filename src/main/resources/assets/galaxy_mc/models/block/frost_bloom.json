@@ -1,0 +1,6 @@
+{
+  "parent": "minecraft:block/cross",
+  "textures": {
+    "cross": "galaxy_mc:block/frost_bloom"
+  }
+}

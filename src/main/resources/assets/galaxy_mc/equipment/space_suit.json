@@ -1,0 +1,14 @@
+{
+  "layers": {
+    "humanoid": [
+      {
+        "texture": "galaxy_mc:space_suit"
+      }
+    ],
+    "humanoid_leggings": [
+      {
+        "texture": "galaxy_mc:space_suit"
+      }
+    ]
+  }
+}

@@ -1,0 +1,8 @@
+{
+  "parent": "minecraft:block/cube_bottom_top",
+  "textures": {
+    "top": "galaxy_mc:block/fungal_turf_top",
+    "side": "galaxy_mc:block/fungal_turf_side",
+    "bottom": "galaxy_mc:block/alien_grass_bottom"
+  }
+}

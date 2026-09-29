@@ -1,0 +1,15 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "building",
+  "pattern": [
+    "##",
+    "##"
+  ],
+  "key": {
+    "#": "galaxy_mc:moon_rock"
+  },
+  "result": {
+    "id": "galaxy_mc:polished_moon_rock",
+    "count": 4
+  }
+}

@@ -20,7 +20,12 @@ import net.minecraft.world.item.equipment.ArmorMaterial;
 import net.minecraft.world.item.equipment.ArmorType;
 import net.minecraft.world.item.equipment.EquipmentAsset;
 import net.minecraft.world.item.equipment.EquipmentAssets;
+import java.util.List;
 import java.util.Map;
+import net.fabricmc.fabric.api.item.v1.DefaultItemComponentEvents;
+import net.minecraft.core.component.DataComponents;
+import net.minecraft.world.item.Items;
+import net.minecraft.world.item.enchantment.Enchantable;
 
 /** Every standalone item in Galaxy MC (block items are registered alongside their blocks). */
 public final class ModItems {
@@ -85,5 +90,11 @@ public final class ModItems {
     public static final Item SPACE_BOOTS = Reg.item("space_boots", new Item.Properties().humanoidArmor(SPACE_SUIT, ArmorType.BOOTS));
 
     public static void init() {
+        // Coal and the other fuels can be enchanted with Fuel Efficiency at an ordinary enchanting
+        // table - including a whole stack at once, which is the point.
+        DefaultItemComponentEvents.MODIFY.register(context -> context.modify(
+                List.of(Items.COAL, Items.CHARCOAL, Items.COAL_BLOCK, Items.BLAZE_ROD, METHANE_CRYSTAL, PLUTONITE,
+                        ModBlocks.FUEL_BLOCK.asItem()),
+                (builder, item) -> builder.set(DataComponents.ENCHANTABLE, new Enchantable(12))));
     }
 }

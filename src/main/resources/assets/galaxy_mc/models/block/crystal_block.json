@@ -1,0 +1,6 @@
+{
+  "parent": "galaxy_mc:block/tinted_cube_all",
+  "textures": {
+    "all": "galaxy_mc:block/crystal_block"
+  }
+}

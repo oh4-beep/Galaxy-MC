@@ -1,0 +1,1 @@
+{"texture":[64,32],"parts":[{"name":"body","parent":"root","pivot":[0,20.5,0],"rot":[0.0,0.0,0.0],"cubes":[{"uv":[0,0],"origin":[-3.5,-3.5,-3.5],"size":[7,7,7],"inflate":0.0}],"anim":null},{"name":"ridge","parent":"body","pivot":[0,-3.5,0],"rot":[0.0,0.0,0.0],"cubes":[{"uv":[28,0],"origin":[-0.5,-2.0,-2.0],"size":[1,2,4],"inflate":0.0}],"anim":null}]}

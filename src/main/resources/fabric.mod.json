@@ -4,17 +4,27 @@
   "version": "${version}",
   "name": "Galaxy MC",
   "description": "Make Minecraft explorable again.",
-  "authors": ["Hillel"],
+  "authors": [
+    "Hillel"
+  ],
   "license": "All Rights Reserved",
   "environment": "*",
   "entrypoints": {
-    "main": ["com.galaxymc.GalaxyMC"],
-    "client": ["com.galaxymc.client.GalaxyMCClient"]
+    "main": [
+      "com.galaxymc.GalaxyMC"
+    ],
+    "client": [
+      "com.galaxymc.client.GalaxyMCClient"
+    ]
   },
   "depends": {
     "fabricloader": ">=0.19.5",
     "minecraft": "~26.2",
     "java": ">=25",
     "fabric-api": "*"
-  }
+  },
+  "mixins": [
+    "galaxy_mc.mixins.json"
+  ],
+  "icon": "assets/galaxy_mc/icon.png"
 }

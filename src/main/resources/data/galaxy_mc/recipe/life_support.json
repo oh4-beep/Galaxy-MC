@@ -1,0 +1,20 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": [
+    "TGT",
+    "LCL",
+    "TRT"
+  ],
+  "key": {
+    "T": "galaxy_mc:titanium_ingot",
+    "G": "minecraft:glass",
+    "L": "#minecraft:leaves",
+    "C": "minecraft:copper_block",
+    "R": "minecraft:redstone"
+  },
+  "result": {
+    "id": "galaxy_mc:life_support",
+    "count": 1
+  }
+}

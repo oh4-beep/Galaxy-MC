@@ -1,0 +1,17 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "building",
+  "pattern": [
+    "###",
+    "#D#",
+    "###"
+  ],
+  "key": {
+    "#": "galaxy_mc:hull_plating",
+    "D": "minecraft:orange_dye"
+  },
+  "result": {
+    "id": "galaxy_mc:hull_stripe",
+    "count": 8
+  }
+}

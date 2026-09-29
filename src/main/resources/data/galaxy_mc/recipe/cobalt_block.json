@@ -1,0 +1,16 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "building",
+  "pattern": [
+    "###",
+    "###",
+    "###"
+  ],
+  "key": {
+    "#": "galaxy_mc:cobalt_ingot"
+  },
+  "result": {
+    "id": "galaxy_mc:cobalt_block",
+    "count": 1
+  }
+}

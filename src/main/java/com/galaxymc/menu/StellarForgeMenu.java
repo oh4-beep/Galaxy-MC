@@ -2,6 +2,7 @@ package com.galaxymc.menu;
 
 import com.galaxymc.climate.ThermalData;
 import com.galaxymc.climate.ThermalMaterials;
+import com.galaxymc.entity.Voices;
 import com.galaxymc.mineral.Infusions;
 import com.galaxymc.mineral.MineralData;
 import com.galaxymc.mineral.MineralTrait;
@@ -11,7 +12,6 @@ import com.galaxymc.registry.ModMenus;
 import com.galaxymc.registry.Reg;
 import net.minecraft.core.Holder;
 import net.minecraft.core.component.DataComponents;
-import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.entity.EquipmentSlotGroup;
 import net.minecraft.world.entity.ai.attributes.Attribute;
@@ -138,6 +138,6 @@ public class StellarForgeMenu extends ItemCombinerMenu {
         }
         inputSlots.removeItem(GEAR, 1);
         inputSlots.removeItem(MINERAL, 1);
-        access.execute((level, pos) -> level.playSound(null, pos, SoundEvents.SMITHING_TABLE_USE, SoundSource.BLOCKS, 1.0F, 0.8F));
+        access.execute((level, pos) -> Voices.play(level, pos, "block.smithing_table.use", SoundSource.BLOCKS, 1.0F, 0.8F));
     }
 }

@@ -1,0 +1,19 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": [
+    "GGG",
+    "RCR",
+    "TTT"
+  ],
+  "key": {
+    "G": "minecraft:glass",
+    "R": "minecraft:redstone",
+    "C": "minecraft:compass",
+    "T": "galaxy_mc:titanium_ingot"
+  },
+  "result": {
+    "id": "galaxy_mc:navigation_console",
+    "count": 1
+  }
+}

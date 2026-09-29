@@ -1,0 +1,11 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "ingredients": [
+    "galaxy_mc:sulfur_block"
+  ],
+  "result": {
+    "id": "galaxy_mc:sulfur",
+    "count": 9
+  }
+}

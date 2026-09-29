@@ -1,0 +1,10 @@
+{
+  "type": "minecraft:smelting",
+  "category": "food",
+  "ingredient": "galaxy_mc:xeno_meat",
+  "result": {
+    "id": "galaxy_mc:cooked_xeno_meat"
+  },
+  "experience": 0.35,
+  "cookingtime": 200
+}

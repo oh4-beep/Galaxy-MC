@@ -1,0 +1,6 @@
+{
+  "model": {
+    "type": "minecraft:model",
+    "model": "galaxy_mc:block/navigation_console"
+  }
+}

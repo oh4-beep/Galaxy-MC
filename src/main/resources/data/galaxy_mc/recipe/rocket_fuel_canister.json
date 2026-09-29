@@ -1,0 +1,18 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": [
+    "ICI",
+    "CBC",
+    "ICI"
+  ],
+  "key": {
+    "I": "minecraft:iron_ingot",
+    "C": "minecraft:coal_block",
+    "B": "minecraft:blaze_powder"
+  },
+  "result": {
+    "id": "galaxy_mc:rocket_fuel_canister",
+    "count": 1
+  }
+}

@@ -1,0 +1,7 @@
+{
+  "parent": "minecraft:item/generated",
+  "textures": {
+    "layer0": "galaxy_mc:item/relic",
+    "layer1": "galaxy_mc:item/relic_overlay"
+  }
+}

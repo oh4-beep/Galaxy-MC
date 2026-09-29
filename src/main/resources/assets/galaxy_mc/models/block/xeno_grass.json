@@ -1,0 +1,6 @@
+{
+  "parent": "minecraft:block/tinted_cross",
+  "textures": {
+    "cross": "galaxy_mc:block/xeno_grass"
+  }
+}
