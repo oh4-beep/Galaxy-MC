@@ -1,9 +1,15 @@
 package com.galaxymc;
 
 import com.galaxymc.command.GalaxyCommand;
+import com.galaxymc.event.ServerEvents;
+import com.galaxymc.network.ModNetwork;
+import com.galaxymc.registry.ModBlockEntities;
 import com.galaxymc.registry.ModBlocks;
+import com.galaxymc.registry.ModComponents;
 import com.galaxymc.registry.ModCreativeTab;
+import com.galaxymc.registry.ModEntities;
 import com.galaxymc.registry.ModItems;
+import com.galaxymc.registry.ModMenus;
 import com.galaxymc.registry.ModWorldgen;
 import net.fabricmc.api.ModInitializer;
 import net.fabricmc.fabric.api.command.v2.CommandRegistrationCallback;
@@ -31,10 +37,17 @@ public class GalaxyMC implements ModInitializer {
 
     @Override
     public void onInitialize() {
+        // Order matters: components before items that use them, blocks before block entities and items.
+        ModComponents.init();
         ModBlocks.init();
         ModItems.init();
+        ModBlockEntities.init();
+        ModMenus.init();
+        ModEntities.init();
         ModWorldgen.init();
         ModCreativeTab.init();
+        ModNetwork.init();
+        ServerEvents.init();
 
         ServerLifecycleEvents.SERVER_STARTING.register(server -> {
             setGalaxySeed(server.getWorldGenSettings().options().seed());
