@@ -54,6 +54,12 @@ public final class GalaxyCommand {
                         .then(Commands.argument("body", StringArgumentType.word())
                                 .suggests((ctx, b) -> SharedSuggestionProvider.suggest(SolarSystem.ids(), b))
                                 .executes(ctx -> tp(ctx, StringArgumentType.getString(ctx, "body")))))
+                .then(Commands.literal("fauna").executes(GalaxyCommand::fauna))
+                .then(Commands.literal("spawn").requires(Commands.hasPermission(Commands.LEVEL_GAMEMASTERS))
+                        .then(Commands.argument("species", StringArgumentType.word())
+                                .suggests((ctx, b) -> SharedSuggestionProvider.suggest(
+                                        com.galaxymc.entity.SpeciesRegistry.all().stream().map(sp -> sp.id).toList(), b))
+                                .executes(ctx -> spawn(ctx, StringArgumentType.getString(ctx, "species")))))
                 .then(Commands.literal("random").requires(Commands.hasPermission(Commands.LEVEL_GAMEMASTERS))
                         .executes(GalaxyCommand::random))
                 .then(Commands.literal("previewall").requires(Commands.hasPermission(Commands.LEVEL_GAMEMASTERS))
@@ -160,6 +166,44 @@ public final class GalaxyCommand {
         }
         ctx.getSource().sendFailure(Component.literal("No world found."));
         return 0;
+    }
+
+    private static int fauna(CommandContext<CommandSourceStack> ctx) throws CommandSyntaxException {
+        ServerPlayer player = ctx.getSource().getPlayerOrException();
+        PlanetProfile p = Planets.at(player.level().dimension(), GalaxyMC.galaxySeed(), player.getX(), player.getZ());
+        if (p == null) {
+            ctx.getSource().sendFailure(Component.literal("Earth's wildlife is on its own."));
+            return 0;
+        }
+        ctx.getSource().sendSuccess(() -> Component.literal("Life on " + p.name + ":").withStyle(ChatFormatting.GOLD), false);
+        for (com.galaxymc.entity.FaunaSpawner.Entry e : com.galaxymc.entity.FaunaSpawner.fauna(p)) {
+            com.galaxymc.entity.Species sp = e.species();
+            com.galaxymc.entity.Strain strain = com.galaxymc.entity.Strain.of(p, sp);
+            ChatFormatting colour = sp.hostile() ? ChatFormatting.RED : sp.passive() ? ChatFormatting.GREEN : ChatFormatting.YELLOW;
+            ctx.getSource().sendSuccess(() -> Component.literal(String.format(" %s %s%s  (size x%.2f, might x%.2f)", strain.name(), sp.name,
+                    sp.giant ? " [GIANT]" : "", strain.size() * sp.scale, strain.might())).withStyle(colour), false);
+        }
+        return 1;
+    }
+
+    private static int spawn(CommandContext<CommandSourceStack> ctx, String id) throws CommandSyntaxException {
+        ServerPlayer player = ctx.getSource().getPlayerOrException();
+        com.galaxymc.entity.Species sp = com.galaxymc.entity.SpeciesRegistry.byId(id);
+        if (sp == null) {
+            ctx.getSource().sendFailure(Component.literal("No such species: " + id));
+            return 0;
+        }
+        PlanetProfile p = Planets.at(player.level().dimension(), GalaxyMC.galaxySeed(), player.getX(), player.getZ());
+        Vec3 look = player.getLookAngle();
+        int x = (int) Math.floor(player.getX() + look.x * (4 + sp.width * sp.scale));
+        int z = (int) Math.floor(player.getZ() + look.z * (4 + sp.width * sp.scale));
+        var mob = com.galaxymc.entity.FaunaSpawner.spawnOne(player.level(), sp, p, x, z);
+        if (mob == null) {
+            ctx.getSource().sendFailure(Component.literal(sp.name + " cannot live there."));
+            return 0;
+        }
+        ctx.getSource().sendSuccess(() -> Component.literal("Summoned ").append(mob.getDisplayName()), false);
+        return 1;
     }
 
     private static int info(CommandContext<CommandSourceStack> ctx) throws CommandSyntaxException {

@@ -12,8 +12,7 @@ import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.effect.MobEffects;
-import net.minecraft.world.entity.EntitySpawnReason;
-import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.EntityTypes;
 import net.minecraft.world.entity.LightningBolt;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
@@ -131,12 +130,10 @@ public class RelicItem extends Item {
                     if (strikes++ >= 2 + lv / 2) {
                         break;
                     }
-                    LightningBolt bolt = EntityType.LIGHTNING_BOLT.create(level, EntitySpawnReason.TRIGGERED);
-                    if (bolt != null) {
-                        bolt.setPos(e.getX(), e.getY(), e.getZ());
-                        bolt.setCause(player);
-                        level.addFreshEntity(bolt);
-                    }
+                    LightningBolt bolt = new LightningBolt(EntityTypes.LIGHTNING_BOLT, level);
+                    bolt.setPos(e.getX(), e.getY(), e.getZ());
+                    bolt.setCause(player);
+                    level.addFreshEntity(bolt);
                 }
             }
         }
