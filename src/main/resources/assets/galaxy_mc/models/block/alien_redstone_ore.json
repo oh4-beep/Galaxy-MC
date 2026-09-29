@@ -1,0 +1,7 @@
+{
+  "parent": "galaxy_mc:block/tinted_ore",
+  "textures": {
+    "base": "galaxy_mc:block/alien_stone",
+    "overlay": "galaxy_mc:block/alien_redstone_ore_overlay"
+  }
+}

@@ -1,0 +1,12 @@
+{
+  "model": {
+    "type": "minecraft:model",
+    "model": "galaxy_mc:block/crystal_block",
+    "tints": [
+      {
+        "type": "minecraft:constant",
+        "value": -8728344
+      }
+    ]
+  }
+}

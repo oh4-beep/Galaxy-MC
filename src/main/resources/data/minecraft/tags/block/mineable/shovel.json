@@ -1,0 +1,20 @@
+{
+  "replace": false,
+  "values": [
+    "galaxy_mc:moon_regolith",
+    "galaxy_mc:mars_sand",
+    "galaxy_mc:venus_regolith",
+    "galaxy_mc:mercury_dust",
+    "galaxy_mc:io_ash",
+    "galaxy_mc:titan_sediment",
+    "galaxy_mc:tholin_dust",
+    "galaxy_mc:alien_grass",
+    "galaxy_mc:alien_soil",
+    "galaxy_mc:alien_sand",
+    "galaxy_mc:alien_regolith",
+    "galaxy_mc:fungal_turf",
+    "galaxy_mc:toxic_turf",
+    "galaxy_mc:ash_block",
+    "galaxy_mc:europa_frost"
+  ]
+}

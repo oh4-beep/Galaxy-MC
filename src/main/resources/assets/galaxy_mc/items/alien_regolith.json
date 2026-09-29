@@ -1,0 +1,12 @@
+{
+  "model": {
+    "type": "minecraft:model",
+    "model": "galaxy_mc:block/alien_regolith",
+    "tints": [
+      {
+        "type": "minecraft:constant",
+        "value": -5725024
+      }
+    ]
+  }
+}

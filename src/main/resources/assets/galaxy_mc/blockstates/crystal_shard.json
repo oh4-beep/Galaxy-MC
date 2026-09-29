@@ -1,0 +1,30 @@
+{
+  "variants": {
+    "facing=up": {
+      "model": "galaxy_mc:block/crystal_shard"
+    },
+    "facing=down": {
+      "model": "galaxy_mc:block/crystal_shard",
+      "x": 180
+    },
+    "facing=north": {
+      "model": "galaxy_mc:block/crystal_shard",
+      "x": 90
+    },
+    "facing=south": {
+      "model": "galaxy_mc:block/crystal_shard",
+      "x": 90,
+      "y": 180
+    },
+    "facing=east": {
+      "model": "galaxy_mc:block/crystal_shard",
+      "x": 90,
+      "y": 90
+    },
+    "facing=west": {
+      "model": "galaxy_mc:block/crystal_shard",
+      "x": 90,
+      "y": 270
+    }
+  }
+}

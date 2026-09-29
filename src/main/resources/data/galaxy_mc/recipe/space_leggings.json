@@ -1,0 +1,16 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "equipment",
+  "pattern": [
+    "TTT",
+    "T T",
+    "T T"
+  ],
+  "key": {
+    "T": "galaxy_mc:titanium_ingot"
+  },
+  "result": {
+    "id": "galaxy_mc:space_leggings",
+    "count": 1
+  }
+}

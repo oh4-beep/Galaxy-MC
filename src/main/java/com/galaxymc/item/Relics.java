@@ -35,7 +35,7 @@ public final class Relics {
         ItemStack stack = new ItemStack(ModItems.RELIC);
         stack.set(ModComponents.RELIC, data);
         stack.set(DataComponents.ITEM_NAME, Component.literal(data.name()));
-        stack.set(DataComponents.CUSTOM_MODEL_DATA, new CustomModelData(List.of(), List.of(), List.of(), List.of(data.color())));
+        stack.set(DataComponents.CUSTOM_MODEL_DATA, new CustomModelData(List.of(), List.of(), List.of(), List.of(0xFF000000 | data.color())));
         stack.set(DataComponents.RARITY, data.level() >= 7 ? Rarity.EPIC : data.level() >= 4 ? Rarity.RARE : Rarity.UNCOMMON);
         return stack;
     }

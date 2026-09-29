@@ -1,0 +1,13 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "ingredients": [
+    "#minecraft:wool",
+    "#minecraft:wool",
+    "galaxy_mc:pyrocite_crystal"
+  ],
+  "result": {
+    "id": "galaxy_mc:thermal_fiber",
+    "count": 4
+  }
+}

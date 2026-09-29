@@ -1,0 +1,8 @@
+{
+  "replace": false,
+  "values": [
+    "galaxy_mc:helionite_ore",
+    "galaxy_mc:plutonite_ore",
+    "galaxy_mc:deep_exotic_ore"
+  ]
+}

@@ -1,0 +1,13 @@
+{
+  "replace": false,
+  "values": [
+    "minecraft:coal",
+    "minecraft:charcoal",
+    "minecraft:coal_block",
+    "minecraft:blaze_rod",
+    "galaxy_mc:rocket_fuel_canister",
+    "galaxy_mc:fuel_block",
+    "galaxy_mc:methane_crystal",
+    "galaxy_mc:plutonite"
+  ]
+}

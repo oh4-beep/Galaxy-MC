@@ -9,6 +9,7 @@ import net.minecraft.core.Direction;
 import net.minecraft.tags.BlockTags;
 import net.minecraft.world.level.WorldGenLevel;
 import net.minecraft.world.level.block.AmethystClusterBlock;
+import net.minecraft.world.level.block.LeavesBlock;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.RotatedPillarBlock;
 import net.minecraft.world.level.block.state.BlockState;
@@ -137,7 +138,7 @@ public final class SurfaceDecorator {
     private static void trees(WorldGenLevel level, Hash.Rng rng, int x0, int z0, BlockPos.MutableBlockPos pos, PlanetProfile p,
                               int count, boolean tall) {
         BlockState log = ModBlocks.XENO_LOG.defaultBlockState().setValue(RotatedPillarBlock.AXIS, Direction.Axis.Y);
-        BlockState leaves = ModBlocks.XENO_LEAVES.defaultBlockState();
+        BlockState leaves = ModBlocks.XENO_LEAVES.defaultBlockState().setValue(LeavesBlock.PERSISTENT, true);
         for (int i = 0; i < count; i++) {
             int x = x0 + rng.nextInt(16);
             int z = z0 + rng.nextInt(16);
@@ -190,7 +191,7 @@ public final class SurfaceDecorator {
         }
         int height = rng.nextInt(6, 14);
         BlockState stem = Blocks.MUSHROOM_STEM.defaultBlockState();
-        BlockState cap = ModBlocks.XENO_LEAVES.defaultBlockState();
+        BlockState cap = ModBlocks.XENO_LEAVES.defaultBlockState().setValue(LeavesBlock.PERSISTENT, true);
         for (int h = 0; h < height; h++) {
             setIfAir(level, pos.set(x, y + h, z), stem);
         }

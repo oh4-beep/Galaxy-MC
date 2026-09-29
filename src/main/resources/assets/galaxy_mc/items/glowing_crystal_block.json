@@ -1,0 +1,12 @@
+{
+  "model": {
+    "type": "minecraft:model",
+    "model": "galaxy_mc:block/glowing_crystal_block",
+    "tints": [
+      {
+        "type": "minecraft:constant",
+        "value": -6625032
+      }
+    ]
+  }
+}

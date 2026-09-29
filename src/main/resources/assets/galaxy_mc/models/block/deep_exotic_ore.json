@@ -1,0 +1,7 @@
+{
+  "parent": "galaxy_mc:block/exotic_ore",
+  "textures": {
+    "base": "galaxy_mc:block/alien_deep_stone",
+    "overlay": "galaxy_mc:block/deep_exotic_ore_overlay"
+  }
+}

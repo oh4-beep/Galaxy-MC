@@ -49,7 +49,7 @@ public final class Minerals {
         ItemStack stack = new ItemStack(ModItems.EXOTIC_MINERAL, count);
         stack.set(ModComponents.MINERAL, data);
         stack.set(DataComponents.ITEM_NAME, Component.literal(data.name()));
-        stack.set(DataComponents.CUSTOM_MODEL_DATA, new CustomModelData(List.of(), List.of(), List.of(), List.of(data.color())));
+        stack.set(DataComponents.CUSTOM_MODEL_DATA, new CustomModelData(List.of(), List.of(), List.of(), List.of(0xFF000000 | data.color())));
         stack.set(DataComponents.RARITY, rarity(data.tier()));
         return stack;
     }

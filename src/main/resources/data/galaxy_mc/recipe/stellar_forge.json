@@ -1,0 +1,19 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": [
+    "IDI",
+    "OAO",
+    "OOO"
+  ],
+  "key": {
+    "I": "galaxy_mc:iridium_ingot",
+    "D": "minecraft:diamond",
+    "A": "minecraft:anvil",
+    "O": "minecraft:obsidian"
+  },
+  "result": {
+    "id": "galaxy_mc:stellar_forge",
+    "count": 1
+  }
+}

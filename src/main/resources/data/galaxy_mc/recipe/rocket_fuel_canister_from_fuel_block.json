@@ -1,0 +1,11 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "ingredients": [
+    "galaxy_mc:fuel_block"
+  ],
+  "result": {
+    "id": "galaxy_mc:rocket_fuel_canister",
+    "count": 9
+  }
+}

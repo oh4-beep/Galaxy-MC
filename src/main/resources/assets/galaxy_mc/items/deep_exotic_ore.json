@@ -1,0 +1,16 @@
+{
+  "model": {
+    "type": "minecraft:model",
+    "model": "galaxy_mc:block/deep_exotic_ore",
+    "tints": [
+      {
+        "type": "minecraft:constant",
+        "value": -6515030
+      },
+      {
+        "type": "minecraft:constant",
+        "value": -4161281
+      }
+    ]
+  }
+}

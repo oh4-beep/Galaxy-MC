@@ -1,0 +1,9 @@
+{
+  "replace": false,
+  "values": [
+    "galaxy_mc:space_helmet",
+    "galaxy_mc:space_chestplate",
+    "galaxy_mc:space_leggings",
+    "galaxy_mc:space_boots"
+  ]
+}

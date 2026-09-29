@@ -1,0 +1,20 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": [
+    "TPT",
+    "CHC",
+    "IPI"
+  ],
+  "key": {
+    "T": "galaxy_mc:titanium_block",
+    "P": "minecraft:paper",
+    "C": "galaxy_mc:cobalt_block",
+    "H": "galaxy_mc:helionite_shard",
+    "I": "galaxy_mc:iridium_block"
+  },
+  "result": {
+    "id": "galaxy_mc:starship_blueprint",
+    "count": 1
+  }
+}

@@ -1,0 +1,12 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "building",
+  "ingredients": [
+    "galaxy_mc:crystal_block",
+    "minecraft:glowstone_dust"
+  ],
+  "result": {
+    "id": "galaxy_mc:glowing_crystal_block",
+    "count": 1
+  }
+}

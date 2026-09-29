@@ -1,0 +1,9 @@
+{
+  "replace": false,
+  "values": [
+    "galaxy_mc:alien_soil",
+    "galaxy_mc:alien_grass",
+    "galaxy_mc:fungal_turf",
+    "galaxy_mc:toxic_turf"
+  ]
+}
