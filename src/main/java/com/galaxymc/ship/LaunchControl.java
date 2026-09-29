@@ -2,6 +2,7 @@ package com.galaxymc.ship;
 
 import com.galaxymc.GalaxyMC;
 import com.galaxymc.block.entity.NavigationConsoleBlockEntity;
+import com.galaxymc.entity.Voices;
 import com.galaxymc.galaxy.Planets;
 import com.galaxymc.galaxy.SolarSystem;
 import com.galaxymc.network.WarpPayload;
@@ -23,7 +24,6 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.util.ProblemReporter;
 import net.minecraft.world.Clearable;
@@ -112,7 +112,7 @@ public final class LaunchControl {
         console.setLaunching(true);
         PENDING.put(consolePos.asLong(), new Pending(level, consolePos.immutable(), destination,
                 player.hasInfiniteMaterials() ? 0 : cost, player.getUUID()));
-        level.playSound(null, consolePos, SoundEvents.BEACON_POWER_SELECT, SoundSource.BLOCKS, 1.5F, 0.6F);
+        Voices.play(level, consolePos, "block.beacon.power_select", SoundSource.BLOCKS, 1.5F, 0.6F);
     }
 
     private static boolean isSameSystem(long seed, Travel.Location from, String destination) {
@@ -175,7 +175,7 @@ public final class LaunchControl {
                 player.sendOverlayMessage(Component.translatable("message.galaxy_mc.launch.countdown", remaining + 1)
                         .withStyle(ChatFormatting.GOLD, ChatFormatting.BOLD));
             }
-            level.playSound(null, p.console, SoundEvents.NOTE_BLOCK_BIT.value(), SoundSource.BLOCKS, 1.0F, 0.5F + p.ticks / 200.0F);
+            Voices.play(level, p.console, "block.note_block.bit", SoundSource.BLOCKS, 1.0F, 0.5F + p.ticks / 200.0F);
         }
         if (p.ticks == COUNTDOWN - WARP_TICKS) {
             String name = destinationName(p.destination);
@@ -199,7 +199,7 @@ public final class LaunchControl {
             }
         }
         if (p.ticks % 10 == 0) {
-            level.playSound(null, p.console, SoundEvents.FIRECHARGE_USE, SoundSource.BLOCKS, 0.6F + (float) intensity, 0.5F);
+            Voices.play(level, p.console, "item.firecharge.use", SoundSource.BLOCKS, 0.6F + (float) intensity, 0.5F);
         }
     }
 
@@ -333,7 +333,7 @@ public final class LaunchControl {
                 moved.rememberLanding(originId, oldAnchor);
             }
         }
-        to.playSound(null, newAnchor, SoundEvents.GENERIC_EXPLODE.value(), SoundSource.BLOCKS, 1.2F, 0.6F);
+        Voices.play(to, newAnchor, "entity.generic.explode", SoundSource.BLOCKS, 1.2F, 0.6F);
         to.sendParticles(ParticleTypes.CLOUD, newAnchor.getX() + 0.5, newAnchor.getY(), newAnchor.getZ() + 0.5, 60,
                 blueprint.radius, 0.5, blueprint.radius, 0.05);
         String name = destinationName(p.destination);

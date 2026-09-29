@@ -1,6 +1,7 @@
 package com.galaxymc.item;
 
 import com.galaxymc.block.entity.NavigationConsoleBlockEntity;
+import com.galaxymc.entity.Voices;
 import com.galaxymc.ship.ShipBlueprint;
 import com.galaxymc.ship.ShipType;
 import java.util.List;
@@ -9,7 +10,6 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
-import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.player.Player;
@@ -74,7 +74,7 @@ public class ShipBlueprintItem extends Item {
         if (level.getBlockEntity(consolePos) instanceof NavigationConsoleBlockEntity console) {
             console.initShip(type, anchor, rotation);
         }
-        level.playSound(null, anchor, SoundEvents.ANVIL_USE, SoundSource.BLOCKS, 1.0F, 0.7F);
+        Voices.play(level, anchor, "block.anvil.use", SoundSource.BLOCKS, 1.0F, 0.7F);
         if (player != null) {
             player.sendOverlayMessage(Component.translatable("message.galaxy_mc.blueprint.built",
                     Component.translatable(type == ShipType.STARSHIP ? "container.galaxy_mc.starship" : "container.galaxy_mc.rocket"))

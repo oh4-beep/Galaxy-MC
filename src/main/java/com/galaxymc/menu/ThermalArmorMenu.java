@@ -2,10 +2,10 @@ package com.galaxymc.menu;
 
 import com.galaxymc.climate.ThermalData;
 import com.galaxymc.climate.ThermalMaterials;
+import com.galaxymc.entity.Voices;
 import com.galaxymc.registry.ModBlocks;
 import com.galaxymc.registry.ModComponents;
 import com.galaxymc.registry.ModMenus;
-import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
@@ -80,7 +80,7 @@ public class ThermalArmorMenu extends ItemCombinerMenu {
         inputSlots.removeItem(ARMOR, 1);
         inputSlots.setItem(WARM, ItemStack.EMPTY);
         inputSlots.setItem(COOL, ItemStack.EMPTY);
-        access.execute((level, pos) -> level.playSound(null, pos, SoundEvents.ARMOR_EQUIP_LEATHER.value(), SoundSource.BLOCKS, 1.0F, 1.0F));
+        access.execute((level, pos) -> Voices.play(level, pos, "item.armor.equip_leather", SoundSource.BLOCKS, 1.0F, 1.0F));
     }
 
     @Override
@@ -91,7 +91,7 @@ public class ThermalArmorMenu extends ItemCombinerMenu {
                 ItemStack stripped = armor.copy();
                 stripped.remove(ModComponents.THERMAL);
                 inputSlots.setItem(ARMOR, stripped);
-                access.execute((level, pos) -> level.playSound(null, pos, SoundEvents.SHEEP_SHEAR, SoundSource.BLOCKS, 1.0F, 1.0F));
+                access.execute((level, pos) -> Voices.play(level, pos, "entity.sheep.shear", SoundSource.BLOCKS, 1.0F, 1.0F));
                 return true;
             }
         }

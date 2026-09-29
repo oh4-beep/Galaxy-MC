@@ -4,12 +4,12 @@ import com.galaxymc.GalaxyMC;
 import com.galaxymc.climate.Climate;
 import com.galaxymc.climate.LifeSupportRegistry;
 import com.galaxymc.climate.ThermalMaterials;
+import com.galaxymc.entity.Voices;
 import com.galaxymc.galaxy.PlanetProfile;
 import com.galaxymc.galaxy.Planets;
 import net.minecraft.ChatFormatting;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
-import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
@@ -51,7 +51,7 @@ public class ThermometerItem extends Item {
                 player.sendOverlayMessage(Component.translatable("message.galaxy_mc.thermometer.reading", Math.round(ambient),
                         range[0], range[1]).append(" ").append(verdict));
             }
-            level.playSound(null, player.blockPosition(), SoundEvents.AMETHYST_BLOCK_CHIME, SoundSource.PLAYERS, 0.8F, 1.4F);
+            Voices.play(level, player.blockPosition(), "block.amethyst_block.chime", SoundSource.PLAYERS, 0.8F, 1.4F);
         }
         return InteractionResult.SUCCESS;
     }

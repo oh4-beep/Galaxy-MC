@@ -2,9 +2,12 @@ package com.galaxymc.entity;
 
 import java.util.HashMap;
 import java.util.Map;
+import net.minecraft.core.BlockPos;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.Identifier;
 import net.minecraft.sounds.SoundEvent;
+import net.minecraft.sounds.SoundSource;
+import net.minecraft.world.level.Level;
 
 /**
  * Creature voices borrowed from vanilla, looked up by sound id rather than by {@code SoundEvents}
@@ -68,5 +71,13 @@ public final class Voices {
         SoundEvent e = BuiltInRegistries.SOUND_EVENT.getValue(Identifier.withDefaultNamespace(id));
         CACHE.put(id, e);
         return e;
+    }
+
+    /** Plays a vanilla sound by id at a block, doing nothing if the id is unknown. */
+    public static void play(Level level, BlockPos pos, String id, SoundSource source, float volume, float pitch) {
+        SoundEvent e = sound(id);
+        if (e != null) {
+            level.playSound(null, pos, e, source, volume, pitch);
+        }
     }
 }

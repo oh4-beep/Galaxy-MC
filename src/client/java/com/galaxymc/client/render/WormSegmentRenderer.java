@@ -73,7 +73,7 @@ public class WormSegmentRenderer extends MobRenderer<WormSegment, CreatureRender
         super.extractRenderState(entity, state, partialTick);
         state.species = entity.species() == null ? -1 : entity.species().index;
         state.strainColor = entity.strainColor();
-        state.bodyPitch = entity.getXRot(partialTick);
+        state.bodyPitch = entity.getViewXRot(partialTick);
         state.limbPos = entity.tickCount + partialTick;
         state.limbSpeed = 0.6F;
     }

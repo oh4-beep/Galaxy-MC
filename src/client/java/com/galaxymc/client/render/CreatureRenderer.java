@@ -56,8 +56,8 @@ public class CreatureRenderer extends MobRenderer<AlienMob, CreatureRenderState,
         float body = Mth.rotLerp(partialTick, entity.yBodyRotO, entity.yBodyRot);
         float head = Mth.rotLerp(partialTick, entity.yHeadRotO, entity.yHeadRot);
         state.headYaw = Mth.clamp(Mth.wrapDegrees(head - body), -75.0F, 75.0F);
-        state.headPitch = entity.getXRot(partialTick);
-        state.bodyPitch = entity.getXRot(partialTick);
+        state.headPitch = entity.getViewXRot(partialTick);
+        state.bodyPitch = entity.getViewXRot(partialTick);
         state.attack = entity.getAttackAnim(partialTick);
         state.species = entity.species() == null ? -1 : entity.species().index;
     }
