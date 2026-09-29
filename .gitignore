@@ -8,3 +8,4 @@ out/
 private_keys/
 tools/terrain-preview/build/
 *.blend1
+__pycache__/
