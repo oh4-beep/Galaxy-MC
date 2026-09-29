@@ -1,0 +1,53 @@
+{
+  "has_precipitation": false,
+  "temperature": 0.8,
+  "downfall": 0.0,
+  "carvers": [],
+  "effects": {
+    "water_color": "#ff5020"
+  },
+  "attributes": {
+    "minecraft:visual/sky_color": "#ff6a1a",
+    "minecraft:visual/fog_color": "#c8301a",
+    "minecraft:visual/ambient_particles": [
+      {
+        "particle": {
+          "type": "minecraft:flame"
+        },
+        "probability": 0.004
+      },
+      {
+        "particle": {
+          "type": "minecraft:ash"
+        },
+        "probability": 0.02
+      }
+    ],
+    "minecraft:visual/fog_end_distance": 120,
+    "minecraft:visual/fog_start_distance": 0
+  },
+  "spawn_costs": {},
+  "spawners": {
+    "ambient": [],
+    "axolotls": [],
+    "creature": [],
+    "misc": [],
+    "monster": [],
+    "underground_water_creature": [],
+    "water_ambient": [],
+    "water_creature": []
+  },
+  "features": [
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    []
+  ]
+}

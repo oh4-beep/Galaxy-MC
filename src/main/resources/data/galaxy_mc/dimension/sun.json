@@ -1,0 +1,11 @@
+{
+  "type": "galaxy_mc:stellar",
+  "generator": {
+    "type": "galaxy_mc:planet",
+    "planet": "sun",
+    "biome_source": {
+      "type": "minecraft:fixed",
+      "biome": "galaxy_mc:sun"
+    }
+  }
+}

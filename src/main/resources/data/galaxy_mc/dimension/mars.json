@@ -1,0 +1,11 @@
+{
+  "type": "galaxy_mc:planet",
+  "generator": {
+    "type": "galaxy_mc:planet",
+    "planet": "mars",
+    "biome_source": {
+      "type": "minecraft:fixed",
+      "biome": "galaxy_mc:mars"
+    }
+  }
+}

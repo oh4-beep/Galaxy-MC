@@ -1,0 +1,29 @@
+{
+  "type": "galaxy_mc:planet",
+  "generator": {
+    "type": "galaxy_mc:planet",
+    "planet": "frontier",
+    "biome_source": {
+      "type": "galaxy_mc:frontier",
+      "biomes": [
+        "galaxy_mc:frontier_deep_space",
+        "galaxy_mc:frontier_azure",
+        "galaxy_mc:frontier_teal",
+        "galaxy_mc:frontier_emerald",
+        "galaxy_mc:frontier_toxic",
+        "galaxy_mc:frontier_amber",
+        "galaxy_mc:frontier_crimson",
+        "galaxy_mc:frontier_rose",
+        "galaxy_mc:frontier_violet",
+        "galaxy_mc:frontier_indigo",
+        "galaxy_mc:frontier_ashen",
+        "galaxy_mc:frontier_black",
+        "galaxy_mc:frontier_white",
+        "galaxy_mc:frontier_gold",
+        "galaxy_mc:frontier_inferno",
+        "galaxy_mc:frontier_snow",
+        "galaxy_mc:frontier_aurora"
+      ]
+    }
+  }
+}
