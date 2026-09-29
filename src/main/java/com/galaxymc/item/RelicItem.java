@@ -77,7 +77,9 @@ public class RelicItem extends Item {
             case NOVA -> {
                 for (LivingEntity e : around(level, player, 4 + lv)) {
                     Vec3 away = e.position().subtract(player.position()).normalize();
-                    e.knockback(1.2 + lv * 0.25, -away.x, -away.z);
+                    double push = 1.2 + lv * 0.25;
+                    e.push(away.x * push, 0.4, away.z * push);
+                    e.hurtMarked = true;
                     e.hurtServer(level, level.damageSources().playerAttack(player), 3 + lv * 1.5F);
                 }
                 level.sendParticles(ParticleTypes.SONIC_BOOM, player.getX(), player.getY() + 1, player.getZ(), 1, 0, 0, 0, 0);
