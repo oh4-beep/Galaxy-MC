@@ -48,20 +48,10 @@ public class PlanetChunkGenerator extends ChunkGenerator {
             Codec.STRING.fieldOf("planet").forGetter(g -> g.planetKey)
     ).apply(i, i.stable(PlanetChunkGenerator::new)));
 
-    public static final int MIN_Y = -64;
-    public static final int HEIGHT = 384;
+    public static final int MIN_Y = PlanetColumns.MIN_Y;
+    public static final int HEIGHT = PlanetColumns.HEIGHT;
     private static final BlockState AIR = Blocks.AIR.defaultBlockState();
     private static final BlockState BEDROCK = Blocks.BEDROCK.defaultBlockState();
-    private static final int RIM = 96;
-    /** Badlands-style strata for frontier canyon worlds. */
-    private static final BlockState[] BANDS = {
-            Blocks.TERRACOTTA.defaultBlockState(), Blocks.DYED_TERRACOTTA.orange().defaultBlockState(),
-            Blocks.DYED_TERRACOTTA.orange().defaultBlockState(), Blocks.DYED_TERRACOTTA.yellow().defaultBlockState(),
-            Blocks.DYED_TERRACOTTA.brown().defaultBlockState(), Blocks.TERRACOTTA.defaultBlockState(),
-            Blocks.DYED_TERRACOTTA.red().defaultBlockState(), Blocks.DYED_TERRACOTTA.white().defaultBlockState(),
-            Blocks.DYED_TERRACOTTA.lightGray().defaultBlockState(), Blocks.DYED_TERRACOTTA.orange().defaultBlockState(),
-            Blocks.TERRACOTTA.defaultBlockState(), Blocks.DYED_TERRACOTTA.red().defaultBlockState()
-    };
 
     private final String planetKey;
 
@@ -129,155 +119,17 @@ public class PlanetChunkGenerator extends ChunkGenerator {
 
     /** Frontier edge falloff in [0, 1]: 0 inside the planet, 1 at and beyond the rim. */
     public double edge(PlanetProfile p, TerrainShaper shaper, double x, double z) {
-        if (p.radius <= 0) {
-            return 0.0;
-        }
-        double d = FrontierMap.distanceFromCenter(x, z);
-        double wobble = 1.0 + 0.07 * shaper.warpNoise().sample(x / 260.0, 7.7, z / 260.0);
-        double r = p.radius * wobble;
-        if (d >= r) {
-            return 1.0;
-        }
-        return Noise.smoothstep(r - RIM, r, d);
+        return PlanetColumns.edge(p, shaper, x, z);
     }
 
     /** Integer surface height of a 2D world column, including edge effects; MIN_Y - 1 for void. */
     public int surfaceY(PlanetProfile p, TerrainShaper shaper, int x, int z) {
-        double e = edge(p, shaper, x, z);
-        if (e >= 1.0) {
-            return MIN_Y - 1;
-        }
-        double h = shaper.height(x, z) - e * 10.0;
-        return (int) Math.floor(Noise.clamp(h, MIN_Y + 6, MIN_Y + HEIGHT - 20));
+        return PlanetColumns.surfaceY(p, shaper, x, z);
     }
 
-    private int bottomY(PlanetProfile p, TerrainShaper shaper, int x, int z, int surface) {
-        double e = edge(p, shaper, x, z);
-        if (e <= 0) {
-            return MIN_Y;
-        }
-        return (int) (MIN_Y + e * (surface - MIN_Y - 3));
-    }
-
-    /**
-     * Fills one column of terrain (no caves, no ores) into {@code out}, indexed from MIN_Y. Shared by
-     * chunk filling and by the height/column queries the game makes for spawning and structures.
-     */
+    /** One column of terrain (no caves, no ores), indexed from MIN_Y; null entries are air. */
     private void fillColumn(PlanetProfile p, TerrainShaper shaper, int x, int z, BlockState[] out) {
-        PlanetProfile.Palette pal = p.palette;
-        if (shaper.isVolumetric()) {
-            fillVolumetricColumn(p, shaper, x, z, out);
-            return;
-        }
-        int surface = surfaceY(p, shaper, x, z);
-        if (surface < MIN_Y) {
-            return;
-        }
-        int bottom = bottomY(p, shaper, x, z, surface);
-        boolean edgeZone = bottom > MIN_Y;
-        int sea = p.seaLevel;
-        boolean underwater = pal.fluid() != null && surface < sea;
-        long colHash = Hash.of(p.seed, x, z);
-        int bedrock = edgeZone ? MIN_Y - 1 : MIN_Y + 1 + (int) Long.remainderUnsigned(colHash, 3);
-        int deepLine = (int) (Math.floorMod(colHash >> 8, 7)) - 3;
-
-        if (p.subsurfaceOcean) {
-            fillIceShell(p, shaper, x, z, surface, out, bedrock, deepLine);
-            return;
-        }
-
-        boolean snowy = pal.snow() != null && surface >= p.snowLine;
-        BlockState top = pal.top();
-        if (pal.alt() != null && shaper.patch(x, z) > 0.22) {
-            top = pal.alt();
-        }
-        boolean banded = p.type == PlanetType.CANYON && p.isFrontier();
-        boolean shore = pal.fluid() != null && surface <= sea + 1 && surface >= sea - 3;
-        for (int y = bottom; y <= surface; y++) {
-            int idx = y - MIN_Y;
-            BlockState st;
-            int depth = surface - y;
-            if (y <= bedrock) {
-                st = BEDROCK;
-            } else if (depth == 0) {
-                st = snowy ? pal.snow() : (underwater || shore) ? pal.shore() : top;
-            } else if (depth <= pal.underDepth()) {
-                st = (underwater || shore) && depth <= 2 ? pal.shore() : pal.under();
-            } else if (banded && y >= deepLine) {
-                st = BANDS[Math.floorMod(y + (int) (shaper.patch(x * 0.25, z * 0.25) * 3), BANDS.length)];
-            } else {
-                st = y < deepLine ? pal.deep() : pal.stone();
-            }
-            out[idx] = st;
-        }
-        if (edgeZone && bottom > MIN_Y) {
-            // Rocky underside of a floating world-disc.
-            out[bottom - MIN_Y] = pal.deep();
-        }
-        if (pal.fluid() != null && surface < sea) {
-            for (int y = surface + 1; y <= sea; y++) {
-                out[y - MIN_Y] = pal.fluid();
-            }
-            if (pal.fluidCap() != null && capHere(p, shaper, x, z)) {
-                out[sea - MIN_Y] = pal.fluidCap();
-            }
-        }
-    }
-
-    private boolean capHere(PlanetProfile p, TerrainShaper shaper, int x, int z) {
-        if (p.type == PlanetType.STELLAR) {
-            return shaper.patch(x, z) > 0.15;
-        }
-        return true;
-    }
-
-    /** Europa: an ice crust floating on a dark ocean, with a rock seabed far below. */
-    private void fillIceShell(PlanetProfile p, TerrainShaper shaper, int x, int z, int surface, BlockState[] out,
-                              int bedrock, int deepLine) {
-        PlanetProfile.Palette pal = p.palette;
-        double n = shaper.detailNoise().fbm(x / 140.0, z / 140.0, 3, 2.0, 0.5);
-        int crust = (int) (16 + 7 * n);
-        int seabed = (int) (6 + 20 * shaper.detailNoise().fbm(x / 220.0 + 50, z / 220.0 - 50, 3, 2.0, 0.5));
-        int iceBottom = surface - crust;
-        for (int y = MIN_Y; y <= surface; y++) {
-            int idx = y - MIN_Y;
-            if (y <= bedrock) {
-                out[idx] = BEDROCK;
-            } else if (y <= seabed) {
-                out[idx] = y < deepLine ? pal.deep() : Blocks.TUFF.defaultBlockState();
-            } else if (y < iceBottom) {
-                out[idx] = pal.fluid();
-            } else if (y == surface) {
-                out[idx] = pal.top();
-            } else {
-                out[idx] = pal.under();
-            }
-        }
-    }
-
-    private void fillVolumetricColumn(PlanetProfile p, TerrainShaper shaper, int x, int z, BlockState[] out) {
-        double e = edge(p, shaper, x, z);
-        if (e >= 1.0) {
-            return;
-        }
-        PlanetProfile.Palette pal = p.palette;
-        int depth = -1;
-        for (int y = MIN_Y + HEIGHT - 8; y >= MIN_Y; y--) {
-            double d = shaper.density(x, y, z) - e * 1.5;
-            int idx = y - MIN_Y;
-            if (d > 0) {
-                depth++;
-                out[idx] = depth == 0 ? pal.top() : depth <= pal.underDepth() ? pal.under() : (d > 0.25 ? pal.deep() : pal.stone());
-            } else {
-                depth = -1;
-            }
-        }
-        if (p.type == PlanetType.GAS_GIANT) {
-            // The storm floor: a deck of dense cloud that catches anything falling off an island.
-            for (int y = MIN_Y; y < MIN_Y + 8; y++) {
-                out[y - MIN_Y] = pal.top();
-            }
-        }
+        PlanetColumns.fill(p, shaper, x, z, out);
     }
 
     // ------------------------------------------------------------------ chunk fill
@@ -313,22 +165,47 @@ public class PlanetChunkGenerator extends ChunkGenerator {
         TerrainShaper shaper = TerrainShaper.of(p);
         BlockState[] buf = new BlockState[16 * 16 * HEIGHT];
         int[] surface = new int[256];
+        boolean[] wet = new boolean[256];
         BlockState[] column = new BlockState[HEIGHT];
-        for (int lx = 0; lx < 16; lx++) {
-            for (int lz = 0; lz < 16; lz++) {
-                java.util.Arrays.fill(column, null);
-                fillColumn(p, shaper, x0 + lx, z0 + lz, column);
-                int top = MIN_Y - 1;
-                for (int i = 0; i < HEIGHT; i++) {
-                    BlockState st = column[i];
-                    if (st != null) {
-                        buf[index(lx, i, lz)] = st;
-                        if (st.getFluidState().isEmpty()) {
-                            top = i + MIN_Y;
-                        }
-                    }
+        if (shaper.isVolumetric()) {
+            for (int lx = 0; lx < 16; lx++) {
+                for (int lz = 0; lz < 16; lz++) {
+                    java.util.Arrays.fill(column, null);
+                    PlanetColumns.fillVolumetric(p, shaper, x0 + lx, z0 + lz, column);
+                    surface[lx * 16 + lz] = copyColumn(column, buf, lx, lz);
                 }
-                surface[lx * 16 + lz] = top;
+            }
+        } else {
+            // Heights on an 18x18 grid (the chunk plus a one-block border) give every column its slope
+            // without evaluating the terrain five times per column.
+            double[] grid = new double[18 * 18];
+            TerrainShaper.Column[] cols = new TerrainShaper.Column[256];
+            for (int gx = 0; gx < 18; gx++) {
+                for (int gz = 0; gz < 18; gz++) {
+                    int lx = gx - 1;
+                    int lz = gz - 1;
+                    TerrainShaper.Column col = null;
+                    if (lx >= 0 && lx < 16 && lz >= 0 && lz < 16) {
+                        col = new TerrainShaper.Column();
+                        cols[lx * 16 + lz] = col;
+                    }
+                    grid[gx * 18 + gz] = PlanetColumns.height(p, shaper, x0 + lx, z0 + lz, col);
+                }
+            }
+            for (int lx = 0; lx < 16; lx++) {
+                for (int lz = 0; lz < 16; lz++) {
+                    int g = (lx + 1) * 18 + (lz + 1);
+                    double h = grid[g];
+                    java.util.Arrays.fill(column, null);
+                    if (!Double.isNaN(h)) {
+                        double slope = PlanetColumns.slope(h, grid[g + 18], grid[g - 18], grid[g + 1], grid[g - 1]);
+                        TerrainShaper.Column col = cols[lx * 16 + lz];
+                        PlanetColumns.fill(p, shaper, x0 + lx, z0 + lz, PlanetColumns.floorY(h), slope, col, column);
+                        wet[lx * 16 + lz] = col.lakeLevel != TerrainShaper.NO_LAKE || col.lakeShore
+                                || (p.palette.fluid() != null && h < p.seaLevel + 1);
+                    }
+                    surface[lx * 16 + lz] = copyColumn(column, buf, lx, lz);
+                }
             }
         }
 
@@ -336,10 +213,25 @@ public class PlanetChunkGenerator extends ChunkGenerator {
             carveCheese(p, shaper, buf, surface, x0, z0);
         }
         if (!shaper.isVolumetric()) {
-            carveWorms(p, shaper, buf, surface, x0, z0);
+            carveWorms(p, shaper, buf, surface, wet, x0, z0);
         }
         placeOres(p, buf, x0, z0, chunk.getPos().x(), chunk.getPos().z());
         write(chunk, buf, x0, z0);
+    }
+
+    /** Copies a column into the chunk buffer and returns the y of its highest non-fluid block. */
+    private static int copyColumn(BlockState[] column, BlockState[] buf, int lx, int lz) {
+        int top = MIN_Y - 1;
+        for (int i = 0; i < HEIGHT; i++) {
+            BlockState st = column[i];
+            if (st != null) {
+                buf[index(lx, i, lz)] = st;
+                if (st.getFluidState().isEmpty()) {
+                    top = i + MIN_Y;
+                }
+            }
+        }
+        return top;
     }
 
     private static int index(int lx, int yi, int lz) {
@@ -418,7 +310,7 @@ public class PlanetChunkGenerator extends ChunkGenerator {
         return lo + (hi - lo) * fy;
     }
 
-    private void carveWorms(PlanetProfile p, TerrainShaper shaper, BlockState[] buf, int[] surface, int x0, int z0) {
+    private void carveWorms(PlanetProfile p, TerrainShaper shaper, BlockState[] buf, int[] surface, boolean[] wet, int x0, int z0) {
         List<PerlinWorms.Worm> worms = PerlinWorms.wormsNear(p, shaper, x0, z0);
         for (PerlinWorms.Worm worm : worms) {
             float[] path = worm.path();
@@ -442,7 +334,7 @@ public class PlanetChunkGenerator extends ChunkGenerator {
                     for (int lz = minZ; lz <= maxZ; lz++) {
                         float dz = z0 + lz + 0.5f - cz;
                         int surf = surface[lx * 16 + lz];
-                        boolean seaAbove = p.palette.fluid() != null && surf < p.seaLevel;
+                        boolean seaAbove = wet[lx * 16 + lz];
                         for (int y = minY; y <= maxY; y++) {
                             float dy = (y + 0.5f - cy) * 1.25f;
                             if (dx * dx + dy * dy + dz * dz > r2) {

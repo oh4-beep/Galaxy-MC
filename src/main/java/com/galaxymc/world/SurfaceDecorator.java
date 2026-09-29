@@ -6,6 +6,7 @@ import com.galaxymc.registry.ModBlocks;
 import com.galaxymc.util.Hash;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.tags.BlockTags;
 import net.minecraft.world.level.WorldGenLevel;
 import net.minecraft.world.level.block.AmethystClusterBlock;
 import net.minecraft.world.level.block.Blocks;
@@ -112,7 +113,7 @@ public final class SurfaceDecorator {
     private static boolean solidTop(WorldGenLevel level, BlockPos.MutableBlockPos pos) {
         BlockState below = level.getBlockState(pos.below());
         return below.isFaceSturdy(level, pos.below(), Direction.UP) && below.getFluidState().isEmpty()
-                && level.getBlockState(pos).isAir();
+                && !below.is(BlockTags.ICE) && !below.is(Blocks.MAGMA_BLOCK) && level.getBlockState(pos).isAir();
     }
 
     private static void flora(WorldGenLevel level, Hash.Rng rng, int x0, int z0, BlockPos.MutableBlockPos pos, PlanetProfile p,

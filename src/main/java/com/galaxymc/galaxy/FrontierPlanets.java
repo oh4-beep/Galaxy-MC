@@ -91,8 +91,10 @@ public final class FrontierPlanets {
         Hash.Rng rng = new Hash.Rng(seed);
         StarClass cls = star.starClass();
 
-        double au = rng.range(0.22, 0.45) * Math.pow(1.75, index - 1) * rng.range(0.85, 1.15);
         double lum = Math.max(cls.luminosity, 0.0005);
+        // Orbits scale with the star's light, as real systems do: red dwarfs keep their worlds close,
+        // blue giants fling theirs far out. Hot inner worlds and cold outer ones exist around every star.
+        double au = rng.range(0.24, 0.5) * Math.pow(1.62, index - 1) * rng.range(0.85, 1.15) * Math.pow(lum, 0.42);
         double kelvin = 278.0 * Math.pow(lum, 0.25) / Math.sqrt(au);
         if (cls == StarClass.NEUTRON || cls == StarClass.BLACK_HOLE) {
             kelvin = rng.range(20, 90);
@@ -152,7 +154,8 @@ public final class FrontierPlanets {
         colours(b, rng, type);
         palette(b, rng, type);
         ores(b, rng, type);
-        b.description(describe(type, baseTemp, gravity, atmosphere));
+        traits(b, new Hash.Rng(Hash.of(seed, 0x54524149L)), type, baseTemp);
+        b.description(describe(type, baseTemp, gravity, atmosphere, b));
         return b.build();
     }
 
@@ -366,12 +369,233 @@ public final class FrontierPlanets {
         }
     }
 
-    private static String describe(PlanetType type, double temp, double gravity, boolean atmosphere) {
+    private static String describe(PlanetType type, double temp, double gravity, boolean atmosphere, PlanetProfile.Builder b) {
         String climate = temp > 400 ? "blistering" : temp > 120 ? "scorching" : temp > 45 ? "hot" : temp > 5 ? "mild"
                 : temp > -40 ? "cold" : temp > -120 ? "frozen" : "deep-frozen";
         String weight = gravity > 1.6 ? "crushing" : gravity > 1.15 ? "heavy" : gravity < 0.45 ? "feather-light" : "familiar";
-        return "A " + climate + " " + type.displayName.toLowerCase() + " with " + weight + " gravity"
-                + (atmosphere ? "." : " and no air to speak of.");
+        StringBuilder sb = new StringBuilder("A ").append(climate).append(' ').append(type.displayName.toLowerCase())
+                .append(" with ").append(weight).append(" gravity").append(atmosphere ? "." : " and no air to speak of.");
+        if (b.describedMountains() != null) {
+            sb.append(' ').append(b.describedMountains());
+        }
+        if (b.describedLakes() != null) {
+            sb.append(' ').append(b.describedLakes());
+        }
+        return sb.toString();
+    }
+
+    // ------------------------------------------------------------------ terrain traits
+
+    /** Badlands-style strata for canyon worlds. */
+    private static BlockState[] canyonBands() {
+        return new BlockState[]{
+                s(Blocks.TERRACOTTA), s(Blocks.DYED_TERRACOTTA.orange()), s(Blocks.DYED_TERRACOTTA.orange()),
+                s(Blocks.DYED_TERRACOTTA.yellow()), s(Blocks.DYED_TERRACOTTA.brown()), s(Blocks.TERRACOTTA),
+                s(Blocks.DYED_TERRACOTTA.red()), s(Blocks.DYED_TERRACOTTA.white()), s(Blocks.DYED_TERRACOTTA.lightGray()),
+                s(Blocks.DYED_TERRACOTTA.orange()), s(Blocks.TERRACOTTA), s(Blocks.DYED_TERRACOTTA.red())
+        };
+    }
+
+    private static final int CLIMATE_SCORCHING = 0;
+    private static final int CLIMATE_HOT = 1;
+    private static final int CLIMATE_TEMPERATE = 2;
+    private static final int CLIMATE_COLD = 3;
+    private static final int CLIMATE_FROZEN = 4;
+
+    private static int climate(double t) {
+        if (t > 300) {
+            return CLIMATE_SCORCHING;
+        }
+        if (t > 75) {
+            return CLIMATE_HOT;
+        }
+        if (t > -5) {
+            return CLIMATE_TEMPERATE;
+        }
+        if (t > -80) {
+            return CLIMATE_COLD;
+        }
+        return CLIMATE_FROZEN;
+    }
+
+    /**
+     * Rolls the traits that make two worlds of the same archetype look nothing alike: how mountainous
+     * they are, how dark or pale their rock is, whether their lakes hold water, ice, lava or nothing but
+     * salt, and where snow starts on the peaks.
+     */
+    private static void traits(PlanetProfile.Builder b, Hash.Rng rng, PlanetType type, double temp) {
+        if (type == PlanetType.GAS_GIANT || type == PlanetType.SHATTERED || type == PlanetType.STELLAR) {
+            b.brightness(rng.range(-0.4, 0.4));
+            return;
+        }
+        int climate = climate(temp);
+
+        // ---- mountains: 30% flat, 25% hills, 25% ranges, 15% alpine, 5% titanic
+        double roll = rng.nextDouble();
+        double mountains;
+        if (roll < 0.30) {
+            mountains = 0.0;
+        } else if (roll < 0.55) {
+            mountains = rng.range(0.15, 0.35);
+        } else if (roll < 0.80) {
+            mountains = rng.range(0.45, 0.75);
+        } else if (roll < 0.95) {
+            mountains = rng.range(0.8, 1.05);
+        } else {
+            mountains = rng.range(1.1, 1.35);
+        }
+        mountains *= switch (type) {
+            case DUNE_SEA, OCEAN, TOXIC, FUNGAL -> 0.45;
+            case GRASSLAND, CRATERED, DESERT -> 0.7;
+            case BARREN_ROCK, CRYSTAL, ICE, LAVA, CANYON, TUNDRA -> 1.2;
+            default -> 1.0;
+        };
+        mountains = Math.min(1.4, mountains);
+        b.mountains(Math.round(mountains * 100) / 100.0);
+        b.describeMountains(mountains > 1.05 ? "Titanic peaks tear at the sky."
+                : mountains > 0.75 ? "Alpine ranges cut the horizon."
+                : mountains > 0.4 ? "Rugged ranges divide its lowlands." : null);
+
+        // ---- brightness: dark basalt worlds to chalk-white ones
+        double bias = switch (type) {
+            case LAVA, ASH -> -0.55;
+            case ICE, TUNDRA -> 0.4;
+            case DESERT, DUNE_SEA -> 0.15;
+            case CRYSTAL -> 0.2;
+            default -> 0.0;
+        };
+        double brightness = Math.max(-1.0, Math.min(1.0, rng.range(-1.0, 1.0) * 0.8 + bias));
+        b.brightness(Math.round(brightness * 100) / 100.0);
+        double stoneHue = rng.nextDouble();
+        double stoneSat = rng.chance(0.25) ? rng.range(0.2, 0.42) : rng.range(0.0, 0.16);
+        b.stoneTint(NameGenerator.hsv(stoneHue, stoneSat, 0.6 + 0.36 * brightness));
+        boolean sandy = type == PlanetType.DESERT || type == PlanetType.DUNE_SEA || type == PlanetType.CANYON;
+        double dustHue = rng.chance(sandy ? 0.2 : 0.6) ? stoneHue + rng.range(-0.06, 0.06) : rng.range(0.04, 0.14);
+        b.dust(NameGenerator.hsv(dustHue, rng.range(0.1, 0.45), Math.min(1.0, 0.66 + 0.32 * brightness)));
+
+        PlanetProfile.Palette pal = b.palette();
+        if (pal != null && pal.stone() != null && pal.stone().getBlock() == ModBlocks.ALIEN_STONE && rng.chance(0.3)) {
+            // A few worlds are built from recognisable rock instead of tinted alien stone.
+            BlockState[] rocks = brightness < -0.35
+                    ? new BlockState[]{s(Blocks.BLACKSTONE), s(Blocks.DEEPSLATE), s(Blocks.TUFF), s(Blocks.SMOOTH_BASALT)}
+                    : brightness > 0.35
+                    ? new BlockState[]{s(Blocks.CALCITE), s(Blocks.DIORITE), s(Blocks.DRIPSTONE_BLOCK)}
+                    : new BlockState[]{s(Blocks.ANDESITE), s(Blocks.GRANITE), s(Blocks.TUFF)};
+            BlockState rock = rng.pick(rocks);
+            BlockState deep = brightness < -0.35 ? s(Blocks.BASALT) : s(ModBlocks.ALIEN_DEEP_STONE);
+            pal = pal.withStone(rock, deep);
+        }
+
+        // ---- cliffs & strata
+        boolean rocky = switch (type) {
+            case BARREN_ROCK, CANYON, CRATERED, DESERT, ASH, LAVA, CRYSTAL -> true;
+            default -> false;
+        };
+        b.cliffs(rocky ? rng.range(1.05, 1.45) : rng.range(1.5, 2.3));
+        if (type == PlanetType.CANYON) {
+            b.strata(canyonBands());
+        } else if ((rocky || mountains > 0.6) && rng.chance(0.4)) {
+            BlockState[] pool = brightness < -0.2
+                    ? new BlockState[]{s(Blocks.BLACKSTONE), s(Blocks.BASALT), s(Blocks.TUFF), s(ModBlocks.SCORCHED_ROCK), pal.stone()}
+                    : brightness > 0.3
+                    ? new BlockState[]{s(Blocks.CALCITE), s(Blocks.DIORITE), s(Blocks.SANDSTONE), s(Blocks.DRIPSTONE_BLOCK), pal.stone()}
+                    : new BlockState[]{s(Blocks.ANDESITE), s(Blocks.TUFF), s(Blocks.GRANITE), s(Blocks.TERRACOTTA), pal.stone()};
+            int n = rng.nextInt(3, 6);
+            BlockState[] bands = new BlockState[n * 2];
+            for (int i = 0; i < bands.length; i++) {
+                bands[i] = i % 2 == 0 ? pal.stone() : rng.pick(pool);
+            }
+            b.strata(bands);
+        }
+
+        // ---- snow line from a lapse rate of roughly 0.35 degrees per block
+        if (climate != CLIMATE_SCORCHING && climate != CLIMATE_HOT && type != PlanetType.ICE) {
+            int line = (int) Math.round(b.baseHeight() + (temp + 3.0) / 0.35);
+            if (type == PlanetType.TUNDRA) {
+                line = Math.min(line, b.snowLine());
+            }
+            if (line < 300) {
+                b.snowLine(Math.max(b.baseHeight() - 16, line));
+                if (pal.snow() == null) {
+                    pal = pal.withSnow(climate == CLIMATE_FROZEN && rng.chance(0.4) ? s(ModBlocks.NITROGEN_ICE) : s(Blocks.SNOW_BLOCK));
+                }
+            }
+        }
+        b.palette(pal);
+
+        // ---- lakes
+        BlockState water = s(Blocks.WATER);
+        BlockState lava = s(Blocks.LAVA);
+        PlanetProfile.Lakes lakes = null;
+        String lakeText = null;
+        double chance = rng.range(0.22, 0.62);
+        switch (climate) {
+            case CLIMATE_SCORCHING -> {
+                if (rng.chance(0.85)) {
+                    BlockState shore = rng.pick(new BlockState[]{s(Blocks.BASALT), s(Blocks.BLACKSTONE), s(Blocks.MAGMA_BLOCK)});
+                    lakes = new PlanetProfile.Lakes(lava, s(Blocks.BASALT), shore, s(Blocks.MAGMA_BLOCK), chance,
+                            null, null, null, 0.0);
+                    lakeText = "Lava pools glow in its basins.";
+                }
+            }
+            case CLIMATE_HOT -> {
+                if (temp > 160 && rng.chance(0.45)) {
+                    lakes = new PlanetProfile.Lakes(lava, s(Blocks.BASALT), s(Blocks.BLACKSTONE), s(Blocks.MAGMA_BLOCK), chance * 0.7,
+                            null, null, null, 0.0);
+                    lakeText = "Lava pools glow in its basins.";
+                } else if (rng.chance(0.7)) {
+                    lakes = PlanetProfile.Lakes.of(null, null, pal.shore(), chance).dry(s(Blocks.CALCITE));
+                    lakeText = "Blinding salt flats mark where lakes once were.";
+                }
+            }
+            case CLIMATE_TEMPERATE -> {
+                if (rng.chance(0.85) || type == PlanetType.GRASSLAND || type == PlanetType.JUNGLE) {
+                    BlockState shore = switch (type) {
+                        case TOXIC, FUNGAL -> s(Blocks.MUD);
+                        case CANYON -> s(Blocks.RED_SAND);
+                        default -> rng.pick(new BlockState[]{s(ModBlocks.ALIEN_SAND), s(ModBlocks.ALIEN_SAND), s(Blocks.GRAVEL)});
+                    };
+                    BlockState bed = rng.pick(new BlockState[]{s(Blocks.CLAY), s(Blocks.GRAVEL), s(Blocks.MUD), shore});
+                    lakes = new PlanetProfile.Lakes(water, null, shore, bed, chance, null, null, null, 0.0);
+                    lakeText = "Its valleys are strung with lakes.";
+                    if (rng.chance(0.18)) {
+                        lakes = lakes.mixed(lava, s(Blocks.BASALT), s(Blocks.BLACKSTONE), rng.range(0.15, 0.35));
+                        lakeText = "Water and lava lie side by side in its basins.";
+                    }
+                }
+            }
+            case CLIMATE_COLD -> {
+                if (rng.chance(0.85)) {
+                    lakes = new PlanetProfile.Lakes(water, s(Blocks.ICE), s(Blocks.GRAVEL), s(Blocks.GRAVEL), chance,
+                            null, null, null, 0.0);
+                    lakeText = "Frozen lakes crack and sing underfoot.";
+                    if (rng.chance(0.15)) {
+                        lakes = lakes.mixed(lava, s(Blocks.OBSIDIAN), s(Blocks.OBSIDIAN), rng.range(0.15, 0.3));
+                        lakeText = "Frozen lakes and lava pools share its valleys.";
+                    }
+                }
+            }
+            default -> {
+                if (rng.chance(0.8)) {
+                    BlockState solid = rng.pick(new BlockState[]{s(Blocks.PACKED_ICE), s(Blocks.BLUE_ICE), s(ModBlocks.NITROGEN_ICE)});
+                    lakes = PlanetProfile.Lakes.of(solid, null, s(Blocks.SNOW_BLOCK), chance);
+                    lakeText = "Glaciers of frozen seas fill its basins.";
+                    if (rng.chance(0.22)) {
+                        lakes = lakes.mixed(lava, s(Blocks.OBSIDIAN), s(Blocks.OBSIDIAN), rng.range(0.15, 0.3));
+                        lakeText = "Lava wells up through its frozen seas.";
+                    }
+                }
+            }
+        }
+        if (lakes != null && rng.chance(0.3)) {
+            lakes = lakes.scaled(rng.range(1.6, 2.2));
+            lakeText = lakeText.replace("lakes", "great lakes").replace("pools", "seas");
+        }
+        if (type == PlanetType.OCEAN || type == PlanetType.DUNE_SEA && climate != CLIMATE_SCORCHING) {
+            lakes = lakes == null ? null : lakes.withChance(lakes.chance() * 0.4);
+        }
+        b.lakes(lakes);
+        b.describeLakes(lakes == null ? null : lakeText);
     }
 
     private static double clamp(double v, double lo, double hi) {
