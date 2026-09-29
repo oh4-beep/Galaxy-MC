@@ -19,8 +19,6 @@ import net.minecraft.world.item.ItemStack;
 public class ThermalArmorScreen extends AbstractContainerScreen<ThermalArmorMenu> {
     public ThermalArmorScreen(ThermalArmorMenu menu, Inventory inventory, Component title) {
         super(menu, inventory, title);
-        this.imageWidth = 176;
-        this.imageHeight = 166;
         this.titleLabelY = -10000;
         this.inventoryLabelY = -10000;
     }

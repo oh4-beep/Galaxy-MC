@@ -30,6 +30,9 @@ import net.minecraft.world.item.ItemStack;
  * enchanted with Fuel Efficiency for up to 64x the value - and launch.
  */
 public class NavigationScreen extends AbstractContainerScreen<NavigationMenu> {
+    private static final int W = 320;
+    private static final int H = 232;
+
     private enum Range { SYSTEM(0, "screen.galaxy_mc.nav.range.system"), NEAR(2, "screen.galaxy_mc.nav.range.near"),
         FAR(5, "screen.galaxy_mc.nav.range.far");
 
@@ -70,8 +73,6 @@ public class NavigationScreen extends AbstractContainerScreen<NavigationMenu> {
 
     public NavigationScreen(NavigationMenu menu, Inventory inventory, Component title) {
         super(menu, inventory, title);
-        this.imageWidth = 320;
-        this.imageHeight = 232;
         // Titles are drawn by this screen in its own colours; park the vanilla labels off-screen.
         this.titleLabelY = -10000;
         this.inventoryLabelY = -10000;
@@ -80,6 +81,9 @@ public class NavigationScreen extends AbstractContainerScreen<NavigationMenu> {
     @Override
     protected void init() {
         super.init();
+        // The vanilla image size is fixed at 176x166, so centre the wider console panel ourselves.
+        this.leftPos = (this.width - W) / 2;
+        this.topPos = (this.height - H) / 2;
         int x = leftPos;
         int y = topPos;
         search = new EditBox(font, x + 8, y + 17, 124, 14, Component.translatable("screen.galaxy_mc.nav.search"));
@@ -248,9 +252,9 @@ public class NavigationScreen extends AbstractContainerScreen<NavigationMenu> {
     public void extractBackground(GuiGraphicsExtractor g, int mouseX, int mouseY, float delta) {
         int x = leftPos;
         int y = topPos;
-        Ui.panel(g, x, y, imageWidth, imageHeight);
+        Ui.panel(g, x, y, W, H);
         Ui.inset(g, x + LIST_X, y + LIST_Y, LIST_W, LIST_H);
-        Ui.inset(g, x + INFO_X, y + LIST_Y, imageWidth - INFO_X - 8, LIST_H);
+        Ui.inset(g, x + INFO_X, y + LIST_Y, W - INFO_X - 8, LIST_H);
         Ui.slots(g, menu, x, y);
         drawList(g, x, y, mouseX, mouseY);
         drawInfo(g, x, y);
@@ -258,7 +262,7 @@ public class NavigationScreen extends AbstractContainerScreen<NavigationMenu> {
         g.text(font, title, x + 8, y + 5, Ui.ACCENT, false);
         g.text(font, playerInventoryTitle, x + NavigationMenu.INV_X, y + NavigationMenu.INV_Y - 11, Ui.TEXT_DIM, false);
         String count = shown.size() + " / " + all.size();
-        g.text(font, Component.literal(count), x + imageWidth - 8 - font.width(count), y + 5, Ui.TEXT_DIM, false);
+        g.text(font, Component.literal(count), x + W - 8 - font.width(count), y + 5, Ui.TEXT_DIM, false);
     }
 
     private void drawList(GuiGraphicsExtractor g, int x, int y, int mouseX, int mouseY) {

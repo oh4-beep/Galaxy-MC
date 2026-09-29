@@ -22,7 +22,7 @@ public final class GalaxyHud {
     public static void climate(GuiGraphicsExtractor g, DeltaTracker delta) {
         Minecraft mc = Minecraft.getInstance();
         ClimatePayload c = ClientState.climate;
-        if (!c.active() || mc.player == null || mc.options.hideGui) {
+        if (!c.active() || mc.player == null) {
             return;
         }
         Font font = mc.font;

@@ -12,8 +12,6 @@ import net.minecraft.world.entity.player.Inventory;
 public class StellarForgeScreen extends AbstractContainerScreen<StellarForgeMenu> {
     public StellarForgeScreen(StellarForgeMenu menu, Inventory inventory, Component title) {
         super(menu, inventory, title);
-        this.imageWidth = 176;
-        this.imageHeight = 166;
         this.titleLabelY = -10000;
         this.inventoryLabelY = -10000;
     }
