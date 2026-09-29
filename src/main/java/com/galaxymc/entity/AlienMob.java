@@ -255,7 +255,7 @@ public class AlienMob extends PathfinderMob implements GalaxyCreature {
             case "blind" -> victim.addEffect(new MobEffectInstance(MobEffects.BLINDNESS, 60, 0));
             case "glow" -> victim.addEffect(new MobEffectInstance(MobEffects.GLOWING, 120, 0));
             case "storm" -> {
-                if (level.random.nextInt(12) == 0) {
+                if (level.getRandom().nextInt(12) == 0) {
                     LightningBolt bolt = new LightningBolt(EntityTypes.LIGHTNING_BOLT, level);
                     bolt.setPos(victim.getX(), victim.getY(), victim.getZ());
                     bolt.setVisualOnly(false);

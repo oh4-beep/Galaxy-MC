@@ -55,8 +55,8 @@ public final class ServerEvents {
             return;
         }
         MineralData mineral = Minerals.forPlanet(p, state.getValue(ExoticOreBlock.SLOT));
-        int count = 1 + server.random.nextInt(1 + Math.min(4, p.tier / 2));
+        int count = 1 + server.getRandom().nextInt(1 + Math.min(4, p.tier / 2));
         Block.popResource(server, pos, Minerals.stack(mineral, count));
-        ExperienceOrb.award(server, Vec3.atCenterOf(pos), 2 + p.tier + server.random.nextInt(3));
+        ExperienceOrb.award(server, Vec3.atCenterOf(pos), 2 + p.tier + server.getRandom().nextInt(3));
     }
 }

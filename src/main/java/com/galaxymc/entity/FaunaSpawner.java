@@ -186,7 +186,7 @@ public final class FaunaSpawner {
         AABB area = player.getBoundingBox().inflate(80, 64, 80);
         List<Mob> nearby = level.getEntitiesOfClass(Mob.class, area, e -> e instanceof GalaxyCreature c && c.countsTowardsCap());
         int cap = 16 + p.danger * 2;
-        if (nearby.size() >= cap || level.random.nextFloat() > 0.45F) {
+        if (nearby.size() >= cap || level.getRandom().nextFloat() > 0.45F) {
             return;
         }
         long giantsNear = nearby.stream().filter(e -> ((GalaxyCreature) e).species() != null && ((GalaxyCreature) e).species().giant).count();
@@ -198,8 +198,8 @@ public final class FaunaSpawner {
         if (s.hostile() && level.getDifficulty() == net.minecraft.world.Difficulty.PEACEFUL) {
             return;
         }
-        double a = level.random.nextDouble() * Math.PI * 2;
-        double r = (s.giant ? 48 : 24) + level.random.nextDouble() * 36;
+        double a = level.getRandom().nextDouble() * Math.PI * 2;
+        double r = (s.giant ? 48 : 24) + level.getRandom().nextDouble() * 36;
         int x = Mth.floor(player.getX() + Math.cos(a) * r);
         int z = Mth.floor(player.getZ() + Math.sin(a) * r);
         if (!level.hasChunkAt(new BlockPos(x, 0, z))) {
@@ -208,10 +208,10 @@ public final class FaunaSpawner {
         if (Planets.at(level.dimension(), GalaxyMC.galaxySeed(), x, z) != p) {
             return;
         }
-        int count = s.groupMin + level.random.nextInt(Math.max(1, s.groupMax - s.groupMin + 1));
+        int count = s.groupMin + level.getRandom().nextInt(Math.max(1, s.groupMax - s.groupMin + 1));
         for (int i = 0; i < count; i++) {
-            int gx = x + level.random.nextInt(9) - 4;
-            int gz = z + level.random.nextInt(9) - 4;
+            int gx = x + level.getRandom().nextInt(9) - 4;
+            int gz = z + level.getRandom().nextInt(9) - 4;
             spawnOne(level, s, p, gx, gz);
         }
     }
@@ -221,7 +221,7 @@ public final class FaunaSpawner {
         for (Entry e : fauna) {
             total += e.weight();
         }
-        int r = level.random.nextInt(Math.max(1, total));
+        int r = level.getRandom().nextInt(Math.max(1, total));
         for (Entry e : fauna) {
             r -= e.weight();
             if (r < 0) {
@@ -252,7 +252,7 @@ public final class FaunaSpawner {
         } else if (s.wormMode == Species.WormMode.BURROW) {
             y = ground - 6 - s.width * s.scale;
         } else if (s.flies()) {
-            y = ground + 4 + level.random.nextInt(10);
+            y = ground + 4 + level.getRandom().nextInt(10);
         } else if (!fluid.isEmpty() && !s.swim) {
             return null;
         }
@@ -260,7 +260,7 @@ public final class FaunaSpawner {
         if (mob == null) {
             return null;
         }
-        mob.snapTo(x + 0.5, y, z + 0.5, level.random.nextFloat() * 360.0F, 0.0F);
+        mob.snapTo(x + 0.5, y, z + 0.5, level.getRandom().nextFloat() * 360.0F, 0.0F);
         if (s.kind != Species.Kind.WORM && !s.flies() && !level.noCollision(mob)) {
             mob.discard();
             return null;
