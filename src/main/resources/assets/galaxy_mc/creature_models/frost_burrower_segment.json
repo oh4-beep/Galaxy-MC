@@ -1,0 +1,1 @@
+{"texture":[64,32],"parts":[{"name":"body","parent":"root","pivot":[0,19.5,0],"rot":[0.0,0.0,0.0],"cubes":[{"uv":[0,0],"origin":[-4.5,-4.5,-4.5],"size":[9,9,9],"inflate":0.0}],"anim":null}]}

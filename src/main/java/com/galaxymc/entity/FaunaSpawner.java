@@ -105,7 +105,7 @@ public final class FaunaSpawner {
                 candidates.add(s);
             }
         }
-        int wanted = Math.min(14, 5 + p.tier + rng.nextInt(4));
+        int wanted = Math.min(24, 9 + p.tier + rng.nextInt(6));
         int passive = 0;
         int giants = 0;
         int guard = 0;
@@ -155,7 +155,7 @@ public final class FaunaSpawner {
 
     public static void tick(MinecraftServer server) {
         long time = server.overworld().getGameTime();
-        if (time % 40 != 0) {
+        if (time % 20 != 0) {
             return;
         }
         for (ServerPlayer player : server.getPlayerList().getPlayers()) {
@@ -185,8 +185,8 @@ public final class FaunaSpawner {
         }
         AABB area = player.getBoundingBox().inflate(80, 64, 80);
         List<Mob> nearby = level.getEntitiesOfClass(Mob.class, area, e -> e instanceof GalaxyCreature c && c.countsTowardsCap());
-        int cap = 16 + p.danger * 2;
-        if (nearby.size() >= cap || level.getRandom().nextFloat() > 0.45F) {
+        int cap = 28 + p.danger * 3;
+        if (nearby.size() >= cap || level.getRandom().nextFloat() > 0.7F) {
             return;
         }
         long giantsNear = nearby.stream().filter(e -> ((GalaxyCreature) e).species() != null && ((GalaxyCreature) e).species().giant).count();

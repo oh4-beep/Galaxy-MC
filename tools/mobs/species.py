@@ -249,6 +249,114 @@ FAMILIES = [
 ]
 
 
+# ---------------------------------------------------------------------------------------------- expansion
+# More strains of the existing families. Appended after each family's own variants so the original
+# species keep their ids, models and textures exactly.
+
+EXTRA_VARIANTS = {
+    "stalker": [("jungle", "Jungle Stalker", {}), ("sand", "Dune Stalker", {}), ("glow", "Glow Stalker", {})],
+    "grazer": [("jungle", "Canopy Grazer", {}), ("storm", "Storm Grazer", {}), ("glow", "Lumen Grazer", {}),
+               ("gold", "Golden Grazer", {})],
+    "hound": [("sand", "Dune Hound", {}), ("storm", "Storm Hound", {}), ("jungle", "Jungle Hound", {}), ("magma", "Magma Hound", {})],
+    "ramhorn": [("frost", "Frost Ramhorn", {}), ("crystal", "Crystal Ramhorn", {}), ("sand", "Dune Ramhorn", {})],
+    "behemoth": [("sand", "Dune Behemoth", {}), ("crystal", "Crystal Behemoth", {})],
+    "hopper": [("jungle", "Leaf Hopper", {}), ("glow", "Glow Hopper", {}), ("ash", "Cinder Hopper", {}), ("moss", "Moss Hopper", {})],
+    "beetle": [("jungle", "Stag Beetle", {}), ("storm", "Spark Beetle", {}), ("glow", "Firefly Beetle", {}), ("sand", "Dung Beetle", {})],
+    "mantis": [("frost", "Frost Mantis", {}), ("sand", "Sand Mantis", {}), ("void", "Void Mantis", {"min_tier": 3}),
+               ("crystal", "Crystal Mantis", {})],
+    "drone": [("toxic", "Plague Drone", {}), ("frost", "Frost Drone", {}), ("magma", "Magma Drone", {})],
+    "weaver": [("jungle", "Jungle Weaver", {}), ("sand", "Dune Weaver", {}), ("glow", "Glow Weaver", {})],
+    "scorpion": [("frost", "Frost Scorpion", {}), ("toxic", "Venom Scorpion", {}), ("void", "Void Scorpion", {"min_tier": 3})],
+    "golem": [("moss", "Moss Golem", {}), ("sand", "Sandstone Golem", {}), ("storm", "Storm Golem", {})],
+    "raptor": [("storm", "Storm Raptor", {}), ("toxic", "Venom Raptor", {}), ("magma", "Magma Raptor", {}),
+               ("moss", "Feathered Raptor", {})],
+    "strider": [("sand", "Dune Strider", {}), ("frost", "Frost Strider", {}), ("jungle", "Canopy Strider", {})],
+    "brute": [("jungle", "Jungle Brute", {}), ("magma", "Magma Brute", {}), ("toxic", "Bog Brute", {})],
+    "crab": [("jungle", "Mangrove Crab", {}), ("toxic", "Bog Crab", {}), ("storm", "Storm Crab", {})],
+    "ooze": [("glow", "Glow Ooze", {}), ("storm", "Storm Ooze", {}), ("sand", "Sand Ooze", {}), ("moss", "Moss Ooze", {})],
+    "glider": [("sand", "Dune Glider", {}), ("glow", "Glow Glider", {}), ("storm", "Storm Glider", {}), ("jungle", "Canopy Glider", {})],
+    "skyray": [("glow", "Glow Ray", {}), ("sand", "Dust Ray", {}), ("aurora", "Aurora Ray", {})],
+    "wyvern": [("storm", "Storm Wyvern", {}), ("toxic", "Venom Wyvern", {}), ("jungle", "Jungle Wyvern", {})],
+    "jelly": [("frost", "Frost Jelly", {}), ("toxic", "Toxic Jelly", {}), ("void", "Void Jelly", {"min_tier": 3})],
+    "moth": [("frost", "Snow Moth", {}), ("jungle", "Emerald Moth", {}), ("gold", "Gilded Moth", {}), ("aurora", "Aurora Moth", {}),
+             ("ember", "Flame Moth", {})],
+    "eye": [("toxic", "Blight Eye", {}), ("storm", "Storm Eye", {}), ("crystal", "Crystal Eye", {})],
+    "sandworm": [("jungle", "Jungle Worm", {}), ("toxic", "Blight Worm", {})],
+    "burrower": [("sand", "Sand Burrower", {}), ("frost", "Frost Burrower", {}), ("magma", "Magma Burrower", {})],
+    "serpent": [("storm", "Storm Serpent", {}), ("toxic", "Swamp Serpent", {}), ("glow", "Glow Serpent", {})],
+    "centipede": [("sand", "Desert Centipede", {}), ("magma", "Magma Centipede", {}), ("toxic", "Venom Centipede", {})],
+    "eel": [("glow", "Glow Eel", {}), ("frost", "Ice Eel", {}), ("toxic", "Bog Eel", {})],
+    "spitter": [("toxic", "Venom Spitter", {}), ("crystal", "Crystal Spitter", {}), ("sand", "Cactus Spitter", {})],
+    "myconid": [("toxic", "Rot Myconid", {}), ("frost", "Frost Myconid", {})],
+    "shardling": [("frost", "Frost Shardling", {}), ("void", "Void Shard", {"min_tier": 3}), ("glow", "Glow Sprite", {})],
+    "mimic": [("sand", "Sand Mimic", {}), ("crystal", "Crystal Mimic", {}), ("magma", "Magma Mimic", {})],
+    "tortoise": [("frost", "Frost Tortoise", {}), ("jungle", "Jungle Tortoise", {}), ("sand", "Desert Tortoise", {})],
+    "stag": [("jungle", "Jungle Stag", {}), ("moss", "Moss Stag", {}), ("aurora", "Aurora Stag", {}), ("gold", "Golden Stag", {}),
+             ("storm", "Storm Stag", {})],
+    "runner": [("frost", "Snow Runner", {}), ("jungle", "Jungle Runner", {}), ("ember", "Ember Runner", {}), ("storm", "Storm Runner", {})],
+    "spikeback": [("frost", "Frost Spikeback", {}), ("magma", "Magma Spikeback", {}), ("sand", "Dune Spikeback", {})],
+    "hydra": [("frost", "Frost Hydra", {}), ("void", "Void Hydra", {"min_tier": 4})],
+    "horror": [("toxic", "Bog Horror", {}), ("frost", "Frost Horror", {})],
+}
+
+# Whole new families built from the existing body plans with new proportions.
+NEW_FAMILIES = [
+    dict(id="longneck", name="Longneck", plan="quadruped", kind="ground", temper="passive", attack="none",
+         params=dict(body_len=20, body_w=12, body_h=11, leg_len=16, leg_w=4, head=6, snout=3, neck=16, tail=12, stride=0.6),
+         health=70, damage=0, speed=0.2, armor=2, group=(1, 3), weight=6, scale=2.2, drops=["xeno_meat", "xeno_hide"], voice="camel",
+         variants=[("plain", "Plains Longneck", {}), ("jungle", "Canopy Longneck", {}), ("frost", "Tundra Longneck", {}),
+                   ("aurora", "Starneck", {}), ("sand", "Dune Longneck", {})]),
+    dict(id="prowler", name="Prowler", plan="quadruped", kind="ground", temper="hostile", attack="melee", leap=True,
+         params=dict(body_len=13, body_w=6, body_h=6, leg_len=9, leg_w=2, head=6, snout=2, jaw=True, tail=13, stride=1.3),
+         health=20, damage=5, speed=0.36, armor=1, group=(1, 2), weight=7, drops=["xeno_hide", "xeno_meat"], voice="zoglin",
+         variants=[("shadow", "Night Prowler", {}), ("jungle", "Jungle Prowler", {}), ("frost", "Snow Prowler", {}),
+                   ("sand", "Sand Prowler", {}), ("storm", "Storm Prowler", {}), ("ember", "Ember Prowler", {})]),
+    dict(id="skitter", name="Skitter", plan="arachnid", kind="ground", temper="hostile", attack="melee", climb=True,
+         params=dict(body_len=7, body_w=5, body_h=3, leg_len=8, head=3),
+         health=8, damage=2, speed=0.36, armor=1, group=(3, 6), weight=9, drops=["chitin_plate"], voice="silverfish",
+         variants=[("stone", "Rock Skitter", {}), ("glow", "Glow Skitter", {}), ("toxic", "Toxic Skitter", {}),
+                   ("sand", "Sand Skitter", {}), ("frost", "Frost Skitter", {})]),
+    dict(id="puffball", name="Puffball", plan="blob", kind="ground", temper="passive", attack="none", hops=True,
+         params=dict(size=7),
+         health=6, damage=0, speed=0.24, armor=0, group=(3, 6), weight=11, drops=["bio_gel", "glow_spore"], voice="slime",
+         variants=[("moss", "Moss Puffball", {}), ("glow", "Glow Puffball", {}), ("frost", "Snow Puffball", {}),
+                   ("gold", "Gold Puffball", {}), ("jungle", "Jungle Puffball", {})]),
+    dict(id="stinger", name="Stinger", plan="flyer", kind="flyer", temper="hostile", attack="melee",
+         params=dict(body_len=5, body_w=3, body_h=3, span=10, head=3, chord=4, legs=True),
+         health=6, damage=2, speed=0.3, fly=0.7, armor=0, group=(3, 6), weight=7, drops=["venom_sac"], voice="bat",
+         variants=[("toxic", "Venom Stinger", {}), ("gold", "Gold Stinger", {}), ("jungle", "Jungle Stinger", {}),
+                   ("ember", "Fire Stinger", {}), ("storm", "Storm Stinger", {})]),
+    dict(id="roc", name="Roc", plan="flyer", kind="flyer", temper="neutral", attack="melee", giant=True,
+         params=dict(body_len=18, body_w=8, body_h=8, span=42, head=6, snout=4, chord=14, tail=10, legs=True),
+         health=180, damage=14, speed=0.3, fly=0.55, armor=4, group=(1, 1), weight=2, scale=3.5, min_tier=2,
+         drops=["leviathan_scale", "xeno_hide"], voice="phantom",
+         variants=[("aurora", "Sky Roc", {}), ("storm", "Thunderbird", {"voice": "ender_dragon"}), ("sand", "Sand Roc", {})]),
+    dict(id="ape", name="Ape", plan="biped", kind="ground", temper="neutral", attack="melee",
+         params=dict(body_h=11, body_w=10, body_d=7, leg_len=7, leg_w=3, head=7, arm_len=15, arm_w=3, lean=0.5),
+         health=34, damage=7, speed=0.28, armor=2, group=(2, 4), weight=7, drops=["xeno_hide", "xeno_meat"], voice="polar_bear",
+         variants=[("jungle", "Canopy Ape", {}), ("frost", "Yeti", {"drops": ["xeno_hide", "thermal_fiber"]}), ("ash", "Ash Ape", {}),
+                   ("moss", "Moss Ape", {}), ("storm", "Storm Ape", {})]),
+    dict(id="crawlback", name="Crawlback", plan="insect", kind="ground", temper="passive", attack="none", swim=True,
+         params=dict(body_len=12, body_w=12, body_h=3, leg_len=4, head=4, antennae=True),
+         health=14, damage=0, speed=0.18, armor=8, group=(2, 4), weight=8, drops=["chitin_plate", "xeno_meat"], voice="turtle",
+         variants=[("stone", "Rock Crawlback", {}), ("deep", "Deep Crawlback", {}), ("sand", "Sand Crawlback", {}),
+                   ("crystal", "Crystal Crawlback", {})]),
+    dict(id="snapjaw", name="Snapjaw", plan="plant", kind="static", temper="hostile", attack="melee",
+         params=dict(stalk=6, head=12),
+         health=26, damage=6, speed=0.0, armor=3, group=(1, 2), weight=5, drops=["glow_spore", "bio_gel"], voice="creaking",
+         variants=[("jungle", "Jungle Snapjaw", {}), ("toxic", "Bog Snapjaw", {}), ("moss", "Moss Snapjaw", {})]),
+    dict(id="drifter", name="Drifter", plan="jelly", kind="floater", temper="passive", attack="none",
+         params=dict(size=16, tentacle=6, tentacles=4),
+         health=24, damage=0, speed=0.1, fly=0.12, armor=0, group=(1, 3), weight=6, drops=["bio_gel", "glow_spore"], voice="squid",
+         variants=[("storm", "Storm Drifter", {}), ("gold", "Gold Drifter", {}), ("glow", "Glow Drifter", {}),
+                   ("aurora", "Aurora Drifter", {})]),
+]
+
+for _fam in FAMILIES:
+    _fam["variants"] = list(_fam["variants"]) + EXTRA_VARIANTS.get(_fam["id"], [])
+FAMILIES.extend(NEW_FAMILIES)
+
+
 def expand():
     """Flattens families x variants into species dicts (without geometry)."""
     out = []

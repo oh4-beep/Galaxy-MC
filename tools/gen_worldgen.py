@@ -32,8 +32,48 @@ WORLD_HEIGHT = 576
 STAR_BOOST = 2.0
 
 
+def spawn(entity, weight, lo, hi):
+    return {"type": f"minecraft:{entity}", "weight": weight, "minCount": lo, "maxCount": hi}
+
+
+# Earth's night: the usual monsters.
+EARTH_MONSTERS = [spawn("spider", 100, 4, 4), spawn("zombie", 95, 4, 4), spawn("zombie_villager", 5, 1, 1),
+                  spawn("skeleton", 100, 4, 4), spawn("creeper", 100, 4, 4), spawn("slime", 100, 4, 4),
+                  spawn("enderman", 10, 1, 4), spawn("witch", 5, 1, 1)]
+EARTH_WATER = {"water_creature": [spawn("squid", 4, 1, 4), spawn("dolphin", 1, 1, 2)],
+               "water_ambient": [spawn("cod", 10, 3, 6), spawn("salmon", 5, 1, 5)],
+               "underground_water_creature": [spawn("glow_squid", 10, 4, 6)],
+               "ambient": [spawn("bat", 10, 8, 8)]}
+
+# Wildlife per Terran climate (Galaxy MC's own aliens are spawned on top of these by FaunaSpawner).
+TERRAN_LIFE = {
+    "terran": dict(EARTH_WATER, creature=[spawn("sheep", 12, 4, 4), spawn("pig", 10, 4, 4), spawn("chicken", 10, 4, 4),
+                                          spawn("cow", 8, 4, 4), spawn("horse", 5, 2, 6), spawn("donkey", 1, 1, 3),
+                                          spawn("rabbit", 4, 2, 3), spawn("wolf", 3, 4, 4), spawn("fox", 2, 2, 4)],
+                   monster=EARTH_MONSTERS),
+    "terran_boreal": dict(EARTH_WATER, creature=[spawn("sheep", 12, 4, 4), spawn("pig", 10, 4, 4), spawn("chicken", 10, 4, 4),
+                                                 spawn("cow", 8, 4, 4), spawn("wolf", 8, 4, 4), spawn("rabbit", 4, 2, 3),
+                                                 spawn("fox", 8, 2, 4)],
+                          monster=EARTH_MONSTERS),
+    "terran_frozen": dict(EARTH_WATER, creature=[spawn("rabbit", 10, 2, 3), spawn("polar_bear", 1, 1, 2), spawn("fox", 8, 2, 4),
+                                                 spawn("goat", 5, 1, 3)],
+                          monster=[spawn("stray", 80, 4, 4), spawn("zombie", 95, 4, 4), spawn("spider", 100, 4, 4),
+                                   spawn("creeper", 100, 4, 4), spawn("skeleton", 20, 4, 4), spawn("enderman", 10, 1, 4)]),
+    "terran_arid": dict(EARTH_WATER, creature=[spawn("rabbit", 4, 2, 3), spawn("camel", 1, 1, 1), spawn("armadillo", 10, 2, 3),
+                                               spawn("horse", 1, 2, 6), spawn("llama", 8, 4, 4)],
+                        monster=[spawn("husk", 80, 4, 4), spawn("zombie", 19, 4, 4), spawn("skeleton", 100, 4, 4),
+                                 spawn("creeper", 100, 4, 4), spawn("spider", 100, 4, 4), spawn("enderman", 10, 1, 4)]),
+    "terran_tropical": dict(EARTH_WATER, creature=[spawn("parrot", 40, 1, 2), spawn("chicken", 10, 4, 4), spawn("panda", 1, 1, 2),
+                                                   spawn("ocelot", 2, 1, 3), spawn("frog", 10, 2, 5), spawn("pig", 10, 4, 4),
+                                                   spawn("cow", 8, 4, 4), spawn("sheep", 12, 4, 4)],
+                            monster=EARTH_MONSTERS,
+                            water_ambient=[spawn("tropical_fish", 25, 8, 8), spawn("pufferfish", 15, 1, 3), spawn("cod", 10, 3, 6)]),
+    "storm": dict(creature=[spawn("horse", 6, 2, 6), spawn("cow", 8, 4, 4), spawn("sheep", 10, 4, 4), spawn("rabbit", 6, 2, 3)]),
+}
+
+
 def biome(sky, fog, water="#3f76e4", water_fog=None, stars=0.0, particles=None, fog_end=None, fog_start=None,
-          precipitation=False, temperature=0.8, clouds=None, cloud_height=None, sunrise=None, downfall=None):
+          precipitation=False, temperature=0.8, clouds=None, cloud_height=None, sunrise=None, downfall=None, life=None):
     attrs = {
         "minecraft:visual/sky_color": sky,
         "minecraft:visual/fog_color": fog,
@@ -64,7 +104,7 @@ def biome(sky, fog, water="#3f76e4", water_fog=None, stars=0.0, particles=None, 
         "effects": {"water_color": water},
         "attributes": attrs,
         "spawn_costs": {},
-        "spawners": empty_spawners(),
+        "spawners": dict(empty_spawners(), **(life or {})),
         "features": [[] for _ in range(11)],
     }
 
@@ -113,13 +153,13 @@ FRONTIER_SKIES = [
     ("aurora", biome("#1a3a4a", "#2a6a6a", water="#20a0a0", stars=0.7, particles=[("minecraft:end_rod", 0.003)])),
     # Terran climates: temperature and downfall pick the vanilla grass and foliage colours, and whether
     # it rains or snows.
-    ("terran", biome("#78a7ff", "#c0d8ff", precipitation=True, temperature=0.75, downfall=0.7)),
-    ("terran_boreal", biome("#7ba4ff", "#c0d8ff", water="#3d57d6", precipitation=True, temperature=0.25, downfall=0.8)),
-    ("terran_frozen", biome("#7fa1ff", "#d0e0ff", water="#3938c9", precipitation=True, temperature=0.0, downfall=0.5)),
-    ("terran_arid", biome("#6eb1ff", "#e0d8b8", water="#44aff5", temperature=2.0, downfall=0.0)),
-    ("terran_tropical", biome("#77a8ff", "#c0e0d0", water="#14a2c5", precipitation=True, temperature=0.95, downfall=0.9)),
+    ("terran", biome("#78a7ff", "#c0d8ff", precipitation=True, temperature=0.75, downfall=0.7, life=TERRAN_LIFE["terran"])),
+    ("terran_boreal", biome("#7ba4ff", "#c0d8ff", water="#3d57d6", precipitation=True, temperature=0.25, downfall=0.8, life=TERRAN_LIFE["terran_boreal"])),
+    ("terran_frozen", biome("#7fa1ff", "#d0e0ff", water="#3938c9", precipitation=True, temperature=0.0, downfall=0.5, life=TERRAN_LIFE["terran_frozen"])),
+    ("terran_arid", biome("#6eb1ff", "#e0d8b8", water="#44aff5", temperature=2.0, downfall=0.0, life=TERRAN_LIFE["terran_arid"])),
+    ("terran_tropical", biome("#77a8ff", "#c0e0d0", water="#14a2c5", precipitation=True, temperature=0.95, downfall=0.9, life=TERRAN_LIFE["terran_tropical"])),
     ("storm", biome("#4a5566", "#6a7484", water="#3a5a7a", precipitation=True, temperature=0.7, downfall=0.6,
-                    clouds="#40485080", cloud_height=160, fog_end=280)),
+                    clouds="#40485080", cloud_height=160, fog_end=280, life=TERRAN_LIFE["storm"])),
     ("volcanic", biome("#5a2a20", "#3a2018", water="#5a4030", temperature=1.5,
                        particles=[("minecraft:ash", 0.03), ("minecraft:white_ash", 0.01), ("minecraft:lava", 0.0006)],
                        fog_start=8, fog_end=200, sunrise="#c04020ff")),

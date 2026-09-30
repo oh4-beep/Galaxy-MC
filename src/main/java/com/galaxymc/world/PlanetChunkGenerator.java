@@ -16,12 +16,16 @@ import java.util.List;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Holder;
 import net.minecraft.server.level.WorldGenRegion;
 import net.minecraft.util.Util;
+import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.LevelHeightAccessor;
+import net.minecraft.world.level.NaturalSpawner;
 import net.minecraft.world.level.NoiseColumn;
 import net.minecraft.world.level.StructureManager;
 import net.minecraft.world.level.WorldGenLevel;
+import net.minecraft.world.level.biome.Biome;
 import net.minecraft.world.level.biome.BiomeManager;
 import net.minecraft.world.level.biome.BiomeSource;
 import net.minecraft.world.level.block.Blocks;
@@ -30,6 +34,9 @@ import net.minecraft.world.level.chunk.ChunkAccess;
 import net.minecraft.world.level.chunk.ChunkGenerator;
 import net.minecraft.world.level.chunk.LevelChunkSection;
 import net.minecraft.world.level.levelgen.Heightmap;
+import net.minecraft.world.level.levelgen.LegacyRandomSource;
+import net.minecraft.world.level.levelgen.RandomSupport;
+import net.minecraft.world.level.levelgen.WorldgenRandom;
 import net.minecraft.world.level.levelgen.RandomState;
 import net.minecraft.world.level.levelgen.blending.Blender;
 
@@ -87,8 +94,21 @@ public class PlanetChunkGenerator extends ChunkGenerator {
     public void buildSurface(WorldGenRegion level, StructureManager structureManager, RandomState randomState, ChunkAccess protoChunk) {
     }
 
+    /**
+     * Earth-like and storm worlds get vanilla wildlife herds when their chunks are made, exactly as the
+     * overworld does (their biomes list the animals). Alien fauna is spawned live by FaunaSpawner.
+     */
     @Override
-    public void spawnOriginalMobs(WorldGenRegion worldGenRegion) {
+    public void spawnOriginalMobs(WorldGenRegion region) {
+        ChunkPos center = region.getCenter();
+        PlanetProfile p = planetAt(center.getMinBlockX() + 8, center.getMinBlockZ() + 8);
+        if (p == null || p.type != PlanetType.TERRAN && p.type != PlanetType.STORM) {
+            return;
+        }
+        Holder<Biome> biome = region.getBiome(center.getWorldPosition().atY(region.getMaxY()));
+        WorldgenRandom random = new WorldgenRandom(new LegacyRandomSource(RandomSupport.generateUniqueSeed()));
+        random.setDecorationSeed(region.getSeed(), center.getMinBlockX(), center.getMinBlockZ());
+        NaturalSpawner.spawnMobsForChunkGeneration(region, biome, center, random);
     }
 
     @Override
