@@ -7,6 +7,7 @@ import com.galaxymc.climate.LifeSupportRegistry;
 import com.galaxymc.entity.FaunaSpawner;
 import com.galaxymc.galaxy.PlanetProfile;
 import com.galaxymc.galaxy.Planets;
+import com.galaxymc.hazard.HazardManager;
 import com.galaxymc.mineral.MineralData;
 import com.galaxymc.mineral.Minerals;
 import com.galaxymc.ship.LaunchControl;
@@ -33,11 +34,16 @@ public final class ServerEvents {
             ClimateTicker.tick(server);
             LaunchControl.tick(server);
             FaunaSpawner.tick(server);
+            HazardManager.tick(server);
         });
-        ServerPlayConnectionEvents.DISCONNECT.register((listener, server) -> ClimateTicker.remove(listener.getPlayer().getUUID()));
+        ServerPlayConnectionEvents.DISCONNECT.register((listener, server) -> {
+            ClimateTicker.remove(listener.getPlayer().getUUID());
+            HazardManager.remove(listener.getPlayer().getUUID());
+        });
         ServerLifecycleEvents.SERVER_STOPPED.register(server -> {
             LifeSupportRegistry.clear();
             LaunchControl.clear();
+            HazardManager.clear();
         });
         PlayerBlockBreakEvents.AFTER.register(ServerEvents::afterBreak);
     }

@@ -2,6 +2,7 @@ package com.galaxymc.client;
 
 import com.galaxymc.GalaxyMC;
 import com.galaxymc.client.color.PlanetTints;
+import com.galaxymc.client.hazard.HazardEffects;
 import com.galaxymc.client.hud.GalaxyHud;
 import com.galaxymc.client.render.CreatureModelData;
 import com.galaxymc.client.render.CreatureRenderer;
@@ -14,6 +15,7 @@ import com.galaxymc.entity.Species;
 import com.galaxymc.entity.SpeciesRegistry;
 import com.galaxymc.network.ClimatePayload;
 import com.galaxymc.network.GalaxySeedPayload;
+import com.galaxymc.network.HazardPayload;
 import com.galaxymc.network.WarpPayload;
 import com.galaxymc.registry.ModEntities;
 import com.galaxymc.registry.ModMenus;
@@ -45,11 +47,18 @@ public class GalaxyMCClient implements ClientModInitializer {
         });
         ClientPlayNetworking.registerGlobalReceiver(WarpPayload.TYPE, (payload, context) ->
                 ClientState.startWarp(payload.ticks(), payload.destination(), payload.interstellar()));
+        ClientPlayNetworking.registerGlobalReceiver(HazardPayload.TYPE, (payload, context) -> HazardEffects.receive(payload));
         ClientPlayConnectionEvents.DISCONNECT.register((listener, client) -> {
             ClientState.climate = ClimatePayload.INACTIVE;
             ClientState.warpTicks = 0;
+            HazardEffects.clear();
         });
-        ClientTickEvents.END_CLIENT_TICK.register(client -> ClientState.tick());
+        ClientTickEvents.END_CLIENT_TICK.register(client -> {
+            ClientState.tick();
+            if (!client.isPaused()) {
+                HazardEffects.tick(client);
+            }
+        });
 
         MenuScreens.register(ModMenus.NAVIGATION, NavigationScreen::new);
         MenuScreens.register(ModMenus.THERMAL_ARMOR, ThermalArmorScreen::new);

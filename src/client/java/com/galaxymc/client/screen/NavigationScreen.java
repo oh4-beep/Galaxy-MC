@@ -42,7 +42,7 @@ public class NavigationScreen extends AbstractContainerScreen<NavigationMenu> {
         }
     }
 
-    private enum Filter { ALL, HABITABLE, HOT, COLD, WATER, ROCKY, GIANTS, STARS, RICH }
+    private enum Filter { ALL, EARTHLIKE, HABITABLE, HOT, COLD, WATER, ROCKY, GIANTS, STARS, RICH, HAZARDS, CALM }
 
     private enum Sort { FUEL, DISTANCE, DANGER, NAME }
 
@@ -167,16 +167,19 @@ public class NavigationScreen extends AbstractContainerScreen<NavigationMenu> {
         PlanetType t = d.type();
         return switch (filter) {
             case ALL -> true;
+            case EARTHLIKE -> t == PlanetType.TERRAN;
             case HABITABLE -> d.temp() > -25 && d.temp() < 55 && t != PlanetType.GAS_GIANT && t != PlanetType.STELLAR;
             case HOT -> d.temp() >= 60;
             case COLD -> d.temp() <= -20;
             case WATER -> t == PlanetType.OCEAN || t == PlanetType.JUNGLE || t == PlanetType.GRASSLAND || t == PlanetType.TUNDRA
-                    || t == PlanetType.TOXIC || t == PlanetType.FUNGAL;
+                    || t == PlanetType.TOXIC || t == PlanetType.FUNGAL || t == PlanetType.TERRAN || t == PlanetType.STORM;
             case ROCKY -> t == PlanetType.BARREN_ROCK || t == PlanetType.CRATERED || t == PlanetType.CANYON || t == PlanetType.CRYSTAL
                     || t == PlanetType.SHATTERED;
             case GIANTS -> t == PlanetType.GAS_GIANT;
             case STARS -> t == PlanetType.STELLAR;
             case RICH -> d.tier() >= 3;
+            case HAZARDS -> !d.hazards().isEmpty();
+            case CALM -> d.hazards().isEmpty() && t != PlanetType.STELLAR;
         };
     }
 
@@ -317,6 +320,18 @@ public class NavigationScreen extends AbstractContainerScreen<NavigationMenu> {
         int danger = d.danger();
         g.text(font, Component.translatable("screen.galaxy_mc.nav.danger", danger), ix, iy, danger >= 7 ? Ui.BAD : danger >= 4 ? Ui.HOT : Ui.GOOD, false);
         g.text(font, Component.translatable("screen.galaxy_mc.nav.tier", d.tier()), ix + 62, iy, Ui.TEXT, false);
+        iy += 10;
+        if (!d.hazards().isEmpty()) {
+            String list = String.join(", ", d.hazards().stream().map(h -> h.displayName).toList());
+            int max = imageWidth - INFO_X - 16 - font.width("\u26a0 ");
+            while (font.width(list) > max && list.length() > 4) {
+                list = list.substring(0, list.length() - 2);
+            }
+            if (list.length() < String.join(", ", d.hazards().stream().map(h -> h.displayName).toList()).length()) {
+                list = list + "\u2026";
+            }
+            g.text(font, Component.translatable("screen.galaxy_mc.nav.hazards", list), ix, iy, Ui.HOT, false);
+        }
         iy += 12;
         boolean ok = affordable(d);
         g.text(font, Component.translatable("screen.galaxy_mc.nav.fuel_needed", ShipFuel.format(d.fuel())), ix, iy, ok ? Ui.GOOD : Ui.BAD, false);

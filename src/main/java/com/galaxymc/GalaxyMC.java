@@ -8,6 +8,7 @@ import com.galaxymc.registry.ModBlocks;
 import com.galaxymc.registry.ModComponents;
 import com.galaxymc.registry.ModCreativeTab;
 import com.galaxymc.registry.ModEntities;
+import com.galaxymc.registry.ModGameRules;
 import com.galaxymc.registry.ModItems;
 import com.galaxymc.registry.ModMenus;
 import com.galaxymc.registry.ModWorldgen;
@@ -45,6 +46,7 @@ public class GalaxyMC implements ModInitializer {
         ModMenus.init();
         ModEntities.init();
         ModWorldgen.init();
+        ModGameRules.init();
         ModCreativeTab.init();
         ModNetwork.init();
         ServerEvents.init();

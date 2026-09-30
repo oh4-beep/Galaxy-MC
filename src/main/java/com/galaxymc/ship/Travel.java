@@ -3,6 +3,7 @@ package com.galaxymc.ship;
 import com.galaxymc.galaxy.FrontierMap;
 import com.galaxymc.galaxy.FrontierPlanets;
 import com.galaxymc.galaxy.Galaxy;
+import com.galaxymc.galaxy.Hazard;
 import com.galaxymc.galaxy.PlanetProfile;
 import com.galaxymc.galaxy.PlanetType;
 import com.galaxymc.galaxy.SolarSystem;
@@ -13,6 +14,7 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Locale;
+import java.util.Set;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.world.level.Level;
 
@@ -35,7 +37,7 @@ public final class Travel {
 
     public record Destination(String id, String name, Star star, PlanetType type, double temp, double swing, double gravity,
                               int danger, int tier, double au, double distanceLy, double fuel, boolean sameSystem,
-                              String description) {
+                              String description, Set<Hazard> hazards) {
         public boolean interstellar() {
             return !sameSystem;
         }
@@ -135,7 +137,7 @@ public final class Travel {
                 }
                 out.add(new Destination(b.id(), b.name(), s, p == null ? null : p.type, p == null ? 15 : p.baseTemp,
                         p == null ? 10 : p.tempSwing, p == null ? 1.0 : p.gravity, p == null ? 0 : p.danger, p == null ? 0 : p.tier,
-                        b.orbitAu(), ly, Math.ceil(fuel), same, b.blurb()));
+                        b.orbitAu(), ly, Math.ceil(fuel), same, b.blurb(), p == null ? Set.of() : p.hazards));
             }
             return;
         }
@@ -151,7 +153,7 @@ public final class Travel {
                 fuel = JUMP_BASE + ly * PER_LIGHT_YEAR + hop(0, p.orbitAu) + well(p);
             }
             out.add(new Destination(p.id, p.name, s, p.type, p.baseTemp, p.tempSwing, p.gravity, p.danger, p.tier, p.orbitAu, ly,
-                    Math.ceil(fuel), same, p.description));
+                    Math.ceil(fuel), same, p.description, p.hazards));
         }
     }
 

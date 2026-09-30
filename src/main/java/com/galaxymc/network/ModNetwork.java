@@ -14,6 +14,7 @@ public final class ModNetwork {
         PayloadTypeRegistry.clientboundPlay().register(GalaxySeedPayload.TYPE, GalaxySeedPayload.CODEC);
         PayloadTypeRegistry.clientboundPlay().register(ClimatePayload.TYPE, ClimatePayload.CODEC);
         PayloadTypeRegistry.clientboundPlay().register(WarpPayload.TYPE, WarpPayload.CODEC);
+        PayloadTypeRegistry.clientboundPlay().register(HazardPayload.TYPE, HazardPayload.CODEC);
         PayloadTypeRegistry.serverboundPlay().register(LaunchPayload.TYPE, LaunchPayload.CODEC);
 
         ServerPlayNetworking.registerGlobalReceiver(LaunchPayload.TYPE,

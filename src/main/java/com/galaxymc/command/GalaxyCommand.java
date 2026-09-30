@@ -3,10 +3,12 @@ package com.galaxymc.command;
 import com.galaxymc.GalaxyMC;
 import com.galaxymc.galaxy.FrontierPlanets;
 import com.galaxymc.galaxy.Galaxy;
+import com.galaxymc.galaxy.Hazard;
 import com.galaxymc.galaxy.PlanetProfile;
 import com.galaxymc.galaxy.Planets;
 import com.galaxymc.galaxy.SolarSystem;
 import com.galaxymc.galaxy.Star;
+import com.galaxymc.hazard.HazardManager;
 import com.galaxymc.ship.Landing;
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.arguments.IntegerArgumentType;
@@ -32,6 +34,8 @@ import net.minecraft.world.phys.Vec3;
  *   <li>{@code /galaxy random} - jump to a random world near Sol.</li>
  *   <li>{@code /galaxy info} - describe the current world.</li>
  *   <li>{@code /galaxy nearby} - list star systems around the current one.</li>
+ *   <li>{@code /galaxy hazard <type>} - set off a tornado, tsunami, eruption, meteor shower or lightning
+ *   storm near you (it still needs the right ground: a sea for tsunamis, a volcano for eruptions).</li>
  * </ul>
  */
 public final class GalaxyCommand {
@@ -45,7 +49,7 @@ public final class GalaxyCommand {
                         .then(Commands.literal("frontier")
                                 .then(Commands.argument("sx", IntegerArgumentType.integer(0, Galaxy.SECTORS - 1))
                                         .then(Commands.argument("sz", IntegerArgumentType.integer(0, Galaxy.SECTORS - 1))
-                                                .then(Commands.argument("slot", IntegerArgumentType.integer(0, 3))
+                                                .then(Commands.argument("slot", IntegerArgumentType.integer(0, Galaxy.SLOTS_PER_SECTOR - 1))
                                                         .then(Commands.argument("orbit", IntegerArgumentType.integer(0, 7))
                                                                 .executes(ctx -> tp(ctx, "f:" + IntegerArgumentType.getInteger(ctx, "sx") + ":"
                                                                         + IntegerArgumentType.getInteger(ctx, "sz") + ":"
@@ -62,6 +66,11 @@ public final class GalaxyCommand {
                                 .executes(ctx -> spawn(ctx, StringArgumentType.getString(ctx, "species")))))
                 .then(Commands.literal("random").requires(Commands.hasPermission(Commands.LEVEL_GAMEMASTERS))
                         .executes(GalaxyCommand::random))
+                .then(Commands.literal("hazard").requires(Commands.hasPermission(Commands.LEVEL_GAMEMASTERS))
+                        .then(Commands.argument("type", StringArgumentType.word())
+                                .suggests((ctx, b) -> SharedSuggestionProvider.suggest(java.util.Arrays.stream(Hazard.values())
+                                        .map(h -> h.name().toLowerCase(java.util.Locale.ROOT)).toList(), b))
+                                .executes(ctx -> hazard(ctx, StringArgumentType.getString(ctx, "type")))))
                 .then(Commands.literal("previewall").requires(Commands.hasPermission(Commands.LEVEL_GAMEMASTERS))
                         .executes(GalaxyCommand::previewAll))
                 .then(Commands.literal("preview").requires(Commands.hasPermission(Commands.LEVEL_GAMEMASTERS))
@@ -168,6 +177,33 @@ public final class GalaxyCommand {
         return 0;
     }
 
+    private static int hazard(CommandContext<CommandSourceStack> ctx, String name) throws CommandSyntaxException {
+        ServerPlayer player = ctx.getSource().getPlayerOrException();
+        Hazard h;
+        try {
+            h = Hazard.valueOf(name.toUpperCase(java.util.Locale.ROOT));
+        } catch (IllegalArgumentException e) {
+            ctx.getSource().sendFailure(Component.literal("Unknown hazard: " + name));
+            return 0;
+        }
+        PlanetProfile p = Planets.at(player.level().dimension(), GalaxyMC.galaxySeed(), player.getX(), player.getZ());
+        if (p == null) {
+            ctx.getSource().sendFailure(Component.literal("Hazards only happen on other worlds."));
+            return 0;
+        }
+        if (HazardManager.start(player.level(), player, p, h) == null) {
+            ctx.getSource().sendFailure(Component.literal(switch (h) {
+                case TSUNAMIS -> "No sea near enough to raise a tsunami.";
+                case ERUPTIONS -> "No volcano within 500 blocks.";
+                case TORNADOES -> "No open ground here for a tornado (or no air).";
+                default -> "This world cannot have that.";
+            }));
+            return 0;
+        }
+        ctx.getSource().sendSuccess(() -> Component.literal("Started: " + h.displayName).withStyle(ChatFormatting.RED), true);
+        return 1;
+    }
+
     private static int fauna(CommandContext<CommandSourceStack> ctx) throws CommandSyntaxException {
         ServerPlayer player = ctx.getSource().getPlayerOrException();
         PlanetProfile p = Planets.at(player.level().dimension(), GalaxyMC.galaxySeed(), player.getX(), player.getZ());
@@ -222,6 +258,10 @@ public final class GalaxyCommand {
         ctx.getSource().sendSuccess(() -> Component.literal(p.description).withStyle(ChatFormatting.ITALIC), false);
         ctx.getSource().sendSuccess(() -> Component.literal(String.format("Temp %d°C (±%d)  Gravity %.2fg  Tier %d  Danger %d/10  ID %s",
                 Math.round(p.baseTemp), Math.round(p.tempSwing), p.gravity, p.tier, p.danger, p.id)).withStyle(ChatFormatting.AQUA), false);
+        if (!p.hazards.isEmpty()) {
+            ctx.getSource().sendSuccess(() -> Component.literal("Hazards: " + String.join(", ",
+                    p.hazards.stream().map(h -> h.displayName).toList())).withStyle(ChatFormatting.RED), false);
+        }
         return 1;
     }
 

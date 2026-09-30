@@ -1,7 +1,10 @@
 package com.galaxymc.client.hud;
 
 import com.galaxymc.client.ClientState;
+import com.galaxymc.client.hazard.HazardEffects;
+import com.galaxymc.galaxy.Hazard;
 import com.galaxymc.network.ClimatePayload;
+import com.galaxymc.network.HazardPayload;
 import com.galaxymc.util.Hash;
 import net.minecraft.client.DeltaTracker;
 import net.minecraft.client.Minecraft;
@@ -29,7 +32,8 @@ public final class GalaxyHud {
         int x = 6;
         int y = 6;
         int w = 132;
-        int h = c.lifeSupport() ? 58 : 48;
+        HazardPayload.Entry hazard = HazardEffects.nearest(mc.player.getX(), mc.player.getZ(), 450);
+        int h = (c.lifeSupport() ? 58 : 48) + (hazard != null ? 11 : 0);
         g.fill(x - 2, y - 2, x + w, y + h, 0x90000000);
         g.fill(x - 2, y - 2, x + w, y - 1, 0xFF3A6AA8);
         g.text(font, Component.literal(c.planet()), x + 2, y + 1, 0xFFFFE08A, true);
@@ -58,8 +62,22 @@ public final class GalaxyHud {
         String state = Math.abs(stress) < 20 ? "stable" : stress < 0 ? (stress < -75 ? "HYPOTHERMIA" : "freezing")
                 : (stress > 75 ? "HEATSTROKE" : "overheating");
         g.text(font, Component.literal(state), x + 44, y + 34, Math.abs(stress) >= 75 ? 0xFFFF5050 : 0xFFD0D0D0, true);
+        int line = y + 45;
         if (c.lifeSupport()) {
-            g.text(font, Component.translatable("hud.galaxy_mc.life_support"), x + 2, y + 45, 0xFF60F0E0, true);
+            g.text(font, Component.translatable("hud.galaxy_mc.life_support"), x + 2, line, 0xFF60F0E0, true);
+            line += 11;
+        }
+        if (hazard != null) {
+            String where = "";
+            double[] pos = HazardEffects.position(hazard.id());
+            if (pos != null && hazard.type() != Hazard.METEORS && hazard.type() != Hazard.LIGHTNING) {
+                double dx = pos[0] - mc.player.getX();
+                double dz = pos[1] - mc.player.getZ();
+                String[] dirs = {"E", "SE", "S", "SW", "W", "NW", "N", "NE"};
+                where = " " + Math.round(Math.hypot(dx, dz)) + "m " + dirs[Math.floorMod((int) Math.round(Math.toDegrees(Math.atan2(dz, dx)) / 45.0), 8)];
+            }
+            boolean blink = (mc.player.tickCount / 8) % 2 == 0;
+            g.text(font, Component.literal("\u26A0 " + hazard.name() + where), x + 2, line, blink ? 0xFFFF5040 : 0xFFFFB040, true);
         }
     }
 
