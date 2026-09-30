@@ -95,7 +95,8 @@ public final class SolarSystem {
                 .ore(new OreSpec(exotic, deepExotic, 2, 5, -60, 90))
                 .caves(1.1, 2, false).biome(0).colors(0x9a9a9a, 0x9a9a9a, 0xb0c8ff, 0xffffff)
                 .mountains(0.3).cliffs(1.4)
-                .description("Airless grey craters under a black sky, ringed by the lunar highlands.").build());
+                .hazard(Hazard.METEORS)
+                .description("Airless grey craters under a black sky, ringed by the lunar highlands. Meteors still fall.").build());
 
         PROFILES.put("mars", PlanetProfile.builder("mars", "Mars", PlanetType.CANYON, seed("mars"))
                 .temp(-55, 30).gravity(0.38).terrain(92, 46, 1.0).snowLine(168).atmosphere(true).orbit(1.52).tier(1).danger(3)
@@ -108,7 +109,8 @@ public final class SolarSystem {
                 .strata(s(ModBlocks.MARS_ROCK), s(ModBlocks.MARS_DEEP_ROCK), s(ModBlocks.MARS_ROCK), s(Blocks.TERRACOTTA),
                         s(ModBlocks.MARS_ROCK), s(ModBlocks.MARS_DEEP_ROCK))
                 .lakes(PlanetProfile.Lakes.of(s(ModBlocks.MARS_POLAR_ICE), null, s(ModBlocks.MARS_SAND), 0.22))
-                .description("A frozen red desert of canyons, dust and buried ice lakes.").build());
+                .hazard(Hazard.TORNADOES)
+                .description("A frozen red desert of canyons, dust and buried ice lakes. Dust devils roam its plains.").build());
 
         PROFILES.put("venus", PlanetProfile.builder("venus", "Venus", PlanetType.ASH, seed("venus"))
                 .temp(440, 6).gravity(0.9).terrain(58, 34, 1.0).sea(50).atmosphere(true).orbit(0.72).tier(2).danger(5)
@@ -121,7 +123,8 @@ public final class SolarSystem {
                 .mountains(0.6).cliffs(1.3)
                 .lakes(new PlanetProfile.Lakes(s(Blocks.LAVA), s(Blocks.BASALT), s(ModBlocks.VENUS_BASALT), s(Blocks.MAGMA_BLOCK),
                         0.5, null, null, null, 0.0))
-                .description("Crushing heat and sulfur haze over rivers and lakes of lava.").build());
+                .hazard(Hazard.ERUPTIONS, Hazard.LIGHTNING).volcanism(0.45)
+                .description("Crushing heat and sulfur haze over rivers and lakes of lava. Its volcanoes are far from dead.").build());
 
         PROFILES.put("mercury", PlanetProfile.builder("mercury", "Mercury", PlanetType.CRATERED, seed("mercury"))
                 .temp(80, 250).gravity(0.38).terrain(74, 26, 1.2).atmosphere(false).orbit(0.39).tier(2).danger(5)
@@ -131,7 +134,8 @@ public final class SolarSystem {
                 .ore(new OreSpec(exotic, deepExotic, 2.5, 5, -60, 90))
                 .caves(1.0, 2, false).biome(3).colors(0x6e6760, 0x6e6760, 0xffc080, 0xffffff)
                 .mountains(0.25).cliffs(1.3)
-                .description("Scorching days, killing nights.").build());
+                .hazard(Hazard.METEORS)
+                .description("Scorching days, killing nights, and meteors in between.").build());
 
         PROFILES.put("sun", PlanetProfile.builder("sun", "The Sun", PlanetType.STELLAR, seed("sun"))
                 .temp(1800, 0).gravity(2.4).terrain(58, 30, 1.0).sea(64).atmosphere(true).orbit(0.0).tier(4).danger(9)
@@ -149,7 +153,8 @@ public final class SolarSystem {
                 .ore(ore(ModBlocks.STORM_CRYSTAL_ORE, 5, 6, 40, 200))
                 .ore(new OreSpec(exotic, deepExotic, 3, 5, 40, 200))
                 .caves(0.0, 0, false).biome(5).colors(0xd8b890, 0xb08860, 0xfff0c0, 0xffffff)
-                .description("Cloud-islands above a bottomless storm.").build());
+                .hazard(Hazard.LIGHTNING)
+                .description("Cloud-islands above a bottomless storm lit by endless lightning.").build());
 
         PROFILES.put("europa", PlanetProfile.builder("europa", "Europa", PlanetType.ICE, seed("europa"))
                 .temp(-160, 10).gravity(0.13).terrain(96, 14, 0.8).sea(70).atmosphere(false).subsurfaceOcean(true).orbit(5.2)
@@ -172,7 +177,8 @@ public final class SolarSystem {
                 .mountains(0.45).cliffs(1.4)
                 .lakes(new PlanetProfile.Lakes(s(Blocks.LAVA), s(Blocks.BASALT), s(Blocks.BASALT), s(Blocks.MAGMA_BLOCK),
                         0.6, null, null, null, 0.0))
-                .description("Sulfur plains and lava lakes.").build());
+                .hazard(Hazard.ERUPTIONS).volcanism(0.8)
+                .description("Sulfur plains and lava lakes under the most volcanic sky in Sol.").build());
 
         PROFILES.put("titan", PlanetProfile.builder("titan", "Titan", PlanetType.TUNDRA, seed("titan"))
                 .temp(-180, 0).gravity(0.14).terrain(59, 18, 0.9).sea(62).atmosphere(true).orbit(9.5).tier(2).danger(4)

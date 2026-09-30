@@ -22,7 +22,13 @@ public enum PlanetType {
     GRASSLAND("Verdant Plains", Climate.TEMPERATE, true, 0x78b048),
     GAS_GIANT("Gas Giant Cloudlands", Climate.COLD, false, 0xd8b890),
     SHATTERED("Shattered World", Climate.ANY, false, 0x6a6a8a),
-    STELLAR("Stellar Corona", Climate.HOT, false, 0xffa030);
+    STELLAR("Stellar Corona", Climate.HOT, false, 0xffa030),
+    /** Earth-like: oceans, rivers, forests, plains, deserts, taiga and snowy peaks, with vanilla nature. */
+    TERRAN("Terran World", Climate.TEMPERATE, true, 0x4aa83a),
+    /** Black rock plains under a ring of great stratovolcanoes with lava-filled craters. */
+    VOLCANIC("Volcanic World", Climate.HOT, false, 0xb0301a),
+    /** Windswept grassland under a bruised sky; tornado alley. */
+    STORM("Storm World", Climate.TEMPERATE, true, 0x5a7090);
 
     public enum Climate { HOT, TEMPERATE, COLD, ANY }
 

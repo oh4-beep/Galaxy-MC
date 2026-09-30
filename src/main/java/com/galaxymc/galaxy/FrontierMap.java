@@ -4,15 +4,17 @@ package com.galaxymc.galaxy;
  * Maps the whole procedural galaxy onto one Minecraft dimension.
  *
  * <p>The frontier dimension is cut into square cells of {@link #CELL} blocks. Each galactic sector owns
- * a 4 x 8 block of cells: four star slots along X, and along Z the star's corona (index 0) followed by
+ * an 8 x 8 block of cells: eight star slots along X, and along Z the star's corona (index 0) followed by
  * its seven possible planets. A planet lives at the centre of its cell as a disc of terrain floating in
  * the void, so worlds can never bleed into each other and every cell is addressable without any saved
- * state. 1536 sectors per side fits comfortably inside the 30-million-block world border.
+ * state. 1536 sectors per side spans about +-18.9 million blocks, inside the 30-million-block border.
  */
 public final class FrontierMap {
     private FrontierMap() {}
 
-    public static final int CELL = 2304;
+    /** Cell size: room for a planet of radius {@link #MAX_RADIUS} plus its crumbling rim and some void. */
+    public static final int CELL = 3072;
+    public static final int MAX_RADIUS = 1380;
     public static final int CELLS_X = Galaxy.SECTORS * Galaxy.SLOTS_PER_SECTOR;
     public static final int CELLS_Z = Galaxy.SECTORS * Galaxy.PLANET_SLOTS;
 

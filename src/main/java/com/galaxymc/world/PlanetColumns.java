@@ -18,14 +18,16 @@ import net.minecraft.world.level.block.state.BlockState;
  *   planet's rock strata, which is what gives canyon walls and mountain faces their bands);</li>
  *   <li>above the snow line flat ground is buried in snow while steep faces stay dark rock;</li>
  *   <li>lakes get beaches and beds, frozen crusts or patchy obsidian skins over lava;</li>
- *   <li>on scorching worlds a network of glowing magma cracks runs through the ground.</li>
+ *   <li>on scorching worlds a network of glowing magma cracks runs through the ground;</li>
+ *   <li>volcano craters fill with lava and their flanks are streaked with basalt and glowing flows;</li>
+ *   <li>Terran worlds pick grass, sand, podzol, snow or red sand per column from their local biome.</li>
  * </ul>
  */
 public final class PlanetColumns {
     private PlanetColumns() {}
 
     public static final int MIN_Y = -64;
-    public static final int HEIGHT = 384;
+    public static final int HEIGHT = 576;
     public static final int MAX_TERRAIN = MIN_Y + HEIGHT - 20;
     /** Width of the crumbling edge band around a frontier disc. */
     public static final int RIM = 96;
@@ -115,20 +117,59 @@ public final class PlanetColumns {
 
     // ------------------------------------------------------------------ columns
 
-    /** Builds a single column, computing its slope from the neighbouring columns. */
+    /** Builds a single column (sky islands included), computing its slope from the neighbouring columns. */
     public static void fill(PlanetProfile p, TerrainShaper shaper, int x, int z, BlockState[] out) {
+        int surface = fillTerrain(p, shaper, x, z, out);
+        if (surface >= MIN_Y && !shaper.isVolumetric()) {
+            islands(p, shaper, x, z, surface, out);
+        }
+    }
+
+    /** The ground alone (no sky islands), as vanilla's height queries and ship landings see it. */
+    public static int fillTerrain(PlanetProfile p, TerrainShaper shaper, int x, int z, BlockState[] out) {
         if (shaper.isVolumetric()) {
             fillVolumetric(p, shaper, x, z, out);
-            return;
+            return MIN_Y - 1;
         }
         TerrainShaper.Column col = new TerrainShaper.Column();
         double h = height(p, shaper, x, z, col);
         if (Double.isNaN(h)) {
-            return;
+            return MIN_Y - 1;
         }
         double s = slope(h, height(p, shaper, x + 1, z, null), height(p, shaper, x - 1, z, null),
                 height(p, shaper, x, z + 1, null), height(p, shaper, x, z - 1, null));
         fill(p, shaper, x, z, floorY(h), s, col, out);
+        return floorY(h);
+    }
+
+    /**
+     * Floating sky-islands over a column: flat-topped, soil-capped rock tapering to a point underneath.
+     * Only fills air, and never where the ground rises close to the island layer.
+     */
+    public static void islands(PlanetProfile p, TerrainShaper shaper, int x, int z, int ground, BlockState[] out) {
+        double m = shaper.islandMask(x, z);
+        if (m <= 0.0 || edge(p, shaper, x, z) > 0.0) {
+            return;
+        }
+        double base = shaper.islandBase(x, z);
+        int top = (int) Math.floor(base + m * 7.0 + shaper.patch(x * 1.5, z * 1.5) * 2.0);
+        double keel = 16.0 + 16.0 * (shaper.patch(x * 0.7 + 300.0, z * 0.7) * 0.5 + 0.5);
+        int bottom = (int) Math.floor(base - Math.pow(m, 0.6) * keel);
+        if (top <= bottom || bottom < ground + 14 || top > MAX_TERRAIN) {
+            return;
+        }
+        PlanetProfile.Palette pal = p.palette;
+        boolean earthlike = p.type == PlanetType.TERRAN;
+        BlockState topState = earthlike ? Blocks.GRASS_BLOCK.defaultBlockState() : pal.top();
+        BlockState under = earthlike ? Blocks.DIRT.defaultBlockState() : pal.under();
+        for (int y = bottom; y <= top; y++) {
+            int idx = y - MIN_Y;
+            if (out[idx] != null) {
+                continue;
+            }
+            int depth = top - y;
+            out[idx] = depth == 0 ? topState : depth <= 3 ? under : pal.stone();
+        }
     }
 
     /**
@@ -187,14 +228,43 @@ public final class PlanetColumns {
         boolean snowy = pal.snow() != null && surface >= snowLine && !lakeCovered && !underwater
                 && slope < p.cliffSlope + 0.9 && snowCovers(p, shaper, x, z, surface - snowLine);
         BlockState top = pal.top();
+        BlockState under = pal.under();
+        BlockState shore = pal.shore();
+        int underDepth = steep ? 0 : pal.underDepth();
         if (pal.alt() != null && shaper.patch(x, z) > 0.22) {
             top = pal.alt();
+        }
+        TerranBiome biome = p.type == PlanetType.TERRAN ? shaper.terranBiome(x, z, surface) : null;
+        if (biome != null) {
+            top = terranTop(biome, shaper, x, z);
+            under = terranUnder(biome);
+            shore = terranShore(biome, shaper, x, z, surface, sea);
+            if (biome == TerranBiome.DESERT || biome == TerranBiome.BADLANDS) {
+                underDepth = steep ? 0 : 5;
+            }
+            if (biome.snowy && !steep && !underwater && pal.snow() != null
+                    && (biome == TerranBiome.SNOWY_PEAKS || biome == TerranBiome.SNOWY_BEACH)) {
+                top = pal.snow();
+            }
         }
         if (p.baseTemp > 250 && p.type != PlanetType.GAS_GIANT && !underwater && !lakeCovered
                 && shaper.cracks(x, z) < 0.028) {
             top = Blocks.MAGMA_BLOCK.defaultBlockState();
         }
-        int underDepth = steep ? 0 : pal.underDepth();
+        // ---- volcanoes: scorched summits, glowing flows down the flanks, a lava-filled crater
+        boolean crater = col != null && col.craterLava != TerrainShaper.NO_LAKE && surface < col.craterLava;
+        if (col != null && col.volcano < 1.0 && !underwater && !lakeCovered) {
+            double t = col.volcano;
+            double flow = shaper.lavaFlow(x, z);
+            if (crater) {
+                top = Blocks.MAGMA_BLOCK.defaultBlockState();
+            } else if (t < 0.9 && flow < 0.04 * (1.0 - t)) {
+                top = Blocks.MAGMA_BLOCK.defaultBlockState();
+            } else if (t < 0.45 || t < 0.7 && shaper.patch(x * 1.3, z * 1.3) > 0.1) {
+                top = shaper.patch(x * 2.1, z * 2.1) > 0.0 ? Blocks.BASALT.defaultBlockState() : Blocks.BLACKSTONE.defaultBlockState();
+                under = Blocks.BASALT.defaultBlockState();
+            }
+        }
         int wobble = (int) (shaper.patch(x * 0.25, z * 0.25) * 3.0);
         int strataFloor = p.baseHeight - 24;
 
@@ -209,11 +279,11 @@ public final class PlanetColumns {
                 } else if (steep) {
                     st = rock(p, pal, y, deepLine, strataFloor, wobble);
                 } else if (lakeCovered) {
-                    st = lakeLevel - surface <= 2 || lakeBed == null ? nonNull(lakeShore, pal.shore()) : lakeBed;
+                    st = lakeLevel - surface <= 2 || lakeBed == null ? nonNull(lakeShore, shore) : lakeBed;
                 } else if (lakeRim) {
                     st = lakeShore;
                 } else if (underwater || seaShore) {
-                    st = pal.shore();
+                    st = shore;
                 } else {
                     st = top;
                 }
@@ -223,9 +293,9 @@ public final class PlanetColumns {
                 } else if ((lakeCovered || lakeRim) && depth <= 2 && lakeShore != null) {
                     st = lakeCovered && lakeBed != null && lakeLevel - surface > 2 ? lakeBed : lakeShore;
                 } else if ((underwater || seaShore) && depth <= 2) {
-                    st = pal.shore();
+                    st = shore;
                 } else {
-                    st = pal.under();
+                    st = under;
                 }
             } else {
                 st = rock(p, pal, y, deepLine, strataFloor, wobble);
@@ -242,6 +312,13 @@ public final class PlanetColumns {
             }
             if (pal.fluidCap() != null && seaCapHere(p, shaper, x, z)) {
                 out[sea - MIN_Y] = pal.fluidCap();
+            } else if (biome == TerranBiome.FROZEN_OCEAN) {
+                out[sea - MIN_Y] = Blocks.ICE.defaultBlockState();
+            }
+        }
+        if (crater) {
+            for (int y = surface + 1; y <= col.craterLava; y++) {
+                out[y - MIN_Y] = Blocks.LAVA.defaultBlockState();
             }
         }
         if (lakeCovered && lakeFluid != null) {
@@ -252,6 +329,53 @@ public final class PlanetColumns {
                 out[lakeLevel - MIN_Y] = lakeCap;
             }
         }
+    }
+
+    // ------------------------------------------------------------------ terran surfaces
+
+    private static BlockState terranTop(TerranBiome b, TerrainShaper shaper, int x, int z) {
+        double patch = shaper.patch(x * 1.7, z * 1.7);
+        return switch (b) {
+            case BEACH, SNOWY_BEACH, DESERT -> Blocks.SAND.defaultBlockState();
+            case BADLANDS -> patch > 0.35 ? Blocks.TERRACOTTA.defaultBlockState() : Blocks.RED_SAND.defaultBlockState();
+            case RIVER, OCEAN, FROZEN_OCEAN -> Blocks.SAND.defaultBlockState();
+            case TAIGA, OLD_GROWTH_TAIGA -> patch > 0.15 ? Blocks.PODZOL.defaultBlockState()
+                    : patch < -0.45 ? Blocks.COARSE_DIRT.defaultBlockState() : Blocks.GRASS_BLOCK.defaultBlockState();
+            case SAVANNA -> patch > 0.3 ? Blocks.COARSE_DIRT.defaultBlockState() : Blocks.GRASS_BLOCK.defaultBlockState();
+            case JUNGLE -> patch > 0.4 ? Blocks.PODZOL.defaultBlockState() : patch < -0.5 ? Blocks.MOSS_BLOCK.defaultBlockState()
+                    : Blocks.GRASS_BLOCK.defaultBlockState();
+            case SWAMP -> patch > 0.3 ? Blocks.MUD.defaultBlockState() : Blocks.GRASS_BLOCK.defaultBlockState();
+            case STONY_PEAKS -> patch > 0.3 ? Blocks.CALCITE.defaultBlockState() : patch < -0.3 ? Blocks.GRAVEL.defaultBlockState()
+                    : Blocks.STONE.defaultBlockState();
+            case SNOWY_PEAKS -> Blocks.SNOW_BLOCK.defaultBlockState();
+            default -> Blocks.GRASS_BLOCK.defaultBlockState();
+        };
+    }
+
+    private static BlockState terranUnder(TerranBiome b) {
+        return switch (b) {
+            case BEACH, SNOWY_BEACH, RIVER, OCEAN, FROZEN_OCEAN -> Blocks.SAND.defaultBlockState();
+            case DESERT -> Blocks.SANDSTONE.defaultBlockState();
+            case BADLANDS -> Blocks.TERRACOTTA.defaultBlockState();
+            case STONY_PEAKS, SNOWY_PEAKS -> Blocks.STONE.defaultBlockState();
+            default -> Blocks.DIRT.defaultBlockState();
+        };
+    }
+
+    /** Sea floors and shores: sand in the shallows, gravel and clay further out, gravel on cold coasts. */
+    private static BlockState terranShore(TerranBiome b, TerrainShaper shaper, int x, int z, int surface, int sea) {
+        double patch = shaper.patch(x * 2.3, z * 2.3);
+        if (b == TerranBiome.FROZEN_OCEAN || b == TerranBiome.SNOWY_BEACH) {
+            return Blocks.GRAVEL.defaultBlockState();
+        }
+        if (b == TerranBiome.SWAMP) {
+            return Blocks.MUD.defaultBlockState();
+        }
+        if (surface < sea - 8) {
+            return patch > 0.25 ? Blocks.GRAVEL.defaultBlockState() : patch < -0.35 ? Blocks.CLAY.defaultBlockState()
+                    : Blocks.SAND.defaultBlockState();
+        }
+        return b == TerranBiome.RIVER && patch > 0.3 ? Blocks.GRAVEL.defaultBlockState() : Blocks.SAND.defaultBlockState();
     }
 
     private static BlockState nonNull(BlockState a, BlockState b) {

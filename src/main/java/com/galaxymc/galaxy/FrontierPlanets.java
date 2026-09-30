@@ -25,7 +25,10 @@ public final class FrontierPlanets {
     /** Sky/biome variants for the frontier dimension, in the order listed by its biome source. */
     public static final String[] SKIES = {
             "deep_space", "azure", "teal", "emerald", "toxic", "amber", "crimson", "rose", "violet",
-            "indigo", "ashen", "black", "white", "gold", "inferno", "snow", "aurora"
+            "indigo", "ashen", "black", "white", "gold", "inferno", "snow", "aurora",
+            // Terran skies follow the local climate (see FrontierBiomeSource), so their grass, rain and
+            // snow match the forest, taiga, desert or jungle underneath.
+            "terran", "terran_boreal", "terran_frozen", "terran_arid", "terran_tropical", "storm", "volcanic"
     };
 
     private static final Map<String, PlanetProfile> CACHE = new ConcurrentHashMap<>();
@@ -72,7 +75,7 @@ public final class FrontierPlanets {
         int danger = Math.min(10, 7 + temp / 3000);
         PlanetProfile.Builder b = PlanetProfile.builder(id(star, 0), star.name() + " Corona", PlanetType.STELLAR, seed)
                 .system(star.name())
-                .temp(temp, 0).gravity(rng.range(1.8, 2.5)).radius(rng.nextInt(700, 1000))
+                .temp(temp, 0).gravity(rng.range(1.8, 2.5)).radius(rng.nextInt(900, FrontierMap.MAX_RADIUS + 1))
                 .terrain(58, rng.range(20, 40), rng.range(0.8, 1.3)).sea(64).atmosphere(true).orbit(0.0)
                 .danger(danger).biome(indexOf("inferno"))
                 .palette(new Palette(s(ModBlocks.SOLAR_SLAG), s(ModBlocks.SOLAR_SLAG), s(ModBlocks.SOLAR_SLAG),
@@ -110,6 +113,10 @@ public final class FrontierPlanets {
         // Pull "life-bearing" archetypes towards temperatures they can plausibly have.
         baseTemp = switch (type) {
             case JUNGLE, GRASSLAND, OCEAN, FUNGAL -> clamp(baseTemp, -15, 55);
+            // Earth-like worlds cluster around Earth's own climate instead of piling up at the limits.
+            case TERRAN -> baseTemp < -6 || baseTemp > 34 ? rng.range(0, 26) : baseTemp;
+            case STORM -> clamp(baseTemp, -12, 42);
+            case VOLCANIC -> Math.max(baseTemp, 70);
             case ICE, TUNDRA -> Math.min(baseTemp, -5);
             case LAVA -> Math.max(baseTemp, 250);
             case ASH -> Math.max(baseTemp, 80);
@@ -122,12 +129,14 @@ public final class FrontierPlanets {
         };
         double swing = atmosphere ? rng.range(2, 25) : rng.range(40, 160);
 
-        String name = NameGenerator.planetName(seed, star.name(), index);
+        String name = NameGenerator.planetName(seed, star.name(), index, type);
+        // Worlds are big enough to get lost on: 1.6 to 2.8 km across.
         int radius = switch (type) {
-            case GAS_GIANT -> 1020;
-            case CRATERED -> rng.nextInt(420, 760);
-            case SHATTERED -> rng.nextInt(700, 960);
-            default -> rng.nextInt(560, 1000);
+            case GAS_GIANT -> FrontierMap.MAX_RADIUS;
+            case CRATERED -> rng.nextInt(520, 960);
+            case SHATTERED -> rng.nextInt(900, 1300);
+            case TERRAN -> rng.nextInt(1080, FrontierMap.MAX_RADIUS + 1);
+            default -> rng.nextInt(800, FrontierMap.MAX_RADIUS + 1);
         };
         double gravity = switch (type) {
             case GAS_GIANT -> rng.range(1.6, 2.6);
@@ -139,8 +148,8 @@ public final class FrontierPlanets {
         int danger = 1;
         danger += (int) Math.min(4, Math.abs(baseTemp - 20) / 90.0);
         danger += switch (type) {
-            case LAVA, TOXIC, SHATTERED, STELLAR -> 2;
-            case JUNGLE, FUNGAL, CRYSTAL, ASH -> 1;
+            case LAVA, TOXIC, SHATTERED, STELLAR, VOLCANIC -> 2;
+            case JUNGLE, FUNGAL, CRYSTAL, ASH, STORM -> 1;
             default -> 0;
         };
         danger += rng.nextInt(3);
@@ -155,6 +164,10 @@ public final class FrontierPlanets {
         palette(b, rng, type);
         ores(b, rng, type);
         traits(b, new Hash.Rng(Hash.of(seed, 0x54524149L)), type, baseTemp);
+        hazards(b, new Hash.Rng(Hash.of(seed, 0x48415A44L)), type, atmosphere);
+        if (!b.hazards().isEmpty()) {
+            b.danger(Math.min(10, danger + b.hazards().size()));
+        }
         b.description(describe(type, baseTemp, gravity, atmosphere, b));
         return b.build();
     }
@@ -168,20 +181,23 @@ public final class FrontierPlanets {
         }
         PlanetType[] options;
         if (t > 600) {
-            options = new PlanetType[]{PlanetType.LAVA, PlanetType.LAVA, PlanetType.ASH, PlanetType.BARREN_ROCK};
+            options = new PlanetType[]{PlanetType.LAVA, PlanetType.LAVA, PlanetType.ASH, PlanetType.BARREN_ROCK, PlanetType.VOLCANIC};
         } else if (t > 200) {
             options = new PlanetType[]{PlanetType.ASH, PlanetType.DESERT, PlanetType.BARREN_ROCK, PlanetType.TOXIC,
-                    PlanetType.LAVA, PlanetType.CRATERED, PlanetType.DUNE_SEA};
+                    PlanetType.LAVA, PlanetType.CRATERED, PlanetType.DUNE_SEA, PlanetType.VOLCANIC, PlanetType.VOLCANIC};
         } else if (t > 55) {
             options = new PlanetType[]{PlanetType.DESERT, PlanetType.DUNE_SEA, PlanetType.CANYON, PlanetType.TOXIC,
-                    PlanetType.CRYSTAL, PlanetType.BARREN_ROCK, PlanetType.ASH};
+                    PlanetType.CRYSTAL, PlanetType.BARREN_ROCK, PlanetType.ASH, PlanetType.VOLCANIC, PlanetType.STORM};
         } else if (t > -10) {
+            // The habitable band: Earth-like worlds are the single most common outcome here.
             options = new PlanetType[]{PlanetType.JUNGLE, PlanetType.OCEAN, PlanetType.GRASSLAND, PlanetType.FUNGAL,
                     PlanetType.CRYSTAL, PlanetType.DESERT, PlanetType.TOXIC, PlanetType.CANYON, PlanetType.JUNGLE,
-                    PlanetType.GRASSLAND};
+                    PlanetType.GRASSLAND, PlanetType.TERRAN, PlanetType.TERRAN, PlanetType.TERRAN, PlanetType.TERRAN,
+                    PlanetType.STORM, PlanetType.STORM, PlanetType.VOLCANIC};
         } else if (t > -90) {
             options = new PlanetType[]{PlanetType.TUNDRA, PlanetType.ICE, PlanetType.CRYSTAL, PlanetType.FUNGAL,
-                    PlanetType.CANYON, PlanetType.CRATERED, PlanetType.BARREN_ROCK, PlanetType.TUNDRA};
+                    PlanetType.CANYON, PlanetType.CRATERED, PlanetType.BARREN_ROCK, PlanetType.TUNDRA, PlanetType.TERRAN,
+                    PlanetType.STORM};
         } else {
             options = new PlanetType[]{PlanetType.ICE, PlanetType.ICE, PlanetType.CRATERED, PlanetType.BARREN_ROCK,
                     PlanetType.CRYSTAL, PlanetType.SHATTERED};
@@ -210,6 +226,9 @@ public final class FrontierPlanets {
             case GAS_GIANT -> b.terrain(110, rng.range(30, 50), f).sea(-64).caves(0, 0, false);
             case SHATTERED -> b.terrain(100, rng.range(40, 70), f).sea(-64).caves(0, 0, false);
             case STELLAR -> b.terrain(58, 30, f).sea(64).caves(0.4, 1, false);
+            case TERRAN -> b.terrain(64, rng.range(34, 50), f).sea(63).caves(1.15, 3, false);
+            case VOLCANIC -> b.terrain(72, rng.range(22, 38), f).sea(rng.chance(0.55) ? 46 : -64).caves(1.0, 3, false);
+            case STORM -> b.terrain(72, rng.range(12, 24), f).sea(rng.chance(0.5) ? 60 : -64).caves(0.9, 2, false);
         }
     }
 
@@ -231,7 +250,10 @@ public final class FrontierPlanets {
             Map.entry(PlanetType.BARREN_ROCK, new String[]{"black", "ashen", "amber"}),
             Map.entry(PlanetType.GAS_GIANT, new String[]{"gold", "amber", "azure", "violet", "rose"}),
             Map.entry(PlanetType.SHATTERED, new String[]{"black", "indigo", "violet"}),
-            Map.entry(PlanetType.STELLAR, new String[]{"inferno"}));
+            Map.entry(PlanetType.STELLAR, new String[]{"inferno"}),
+            Map.entry(PlanetType.TERRAN, new String[]{"terran"}),
+            Map.entry(PlanetType.VOLCANIC, new String[]{"volcanic", "volcanic", "ashen", "crimson"}),
+            Map.entry(PlanetType.STORM, new String[]{"storm"}));
 
     public static int indexOf(String sky) {
         for (int i = 0; i < SKIES.length; i++) {
@@ -270,6 +292,11 @@ public final class FrontierPlanets {
             case ICE, TUNDRA -> {
                 grass = NameGenerator.hsv(rng.range(0.45, 0.65), rng.range(0.05, 0.3), rng.range(0.75, 0.95));
                 foliage = NameGenerator.hsv(rng.range(0.45, 0.7), rng.range(0.2, 0.5), rng.range(0.7, 0.95));
+            }
+            case TERRAN, STORM -> {
+                // Vanilla grass takes its colour from the biome; these tint the odd alien plant.
+                grass = NameGenerator.hsv(rng.range(0.22, 0.33), rng.range(0.45, 0.7), rng.range(0.55, 0.75));
+                foliage = NameGenerator.hsv(rng.range(0.24, 0.36), rng.range(0.5, 0.75), rng.range(0.45, 0.7));
             }
             default -> {
                 grass = NameGenerator.hsv(hue, rng.range(0.2, 0.7), rng.range(0.45, 0.85));
@@ -320,6 +347,13 @@ public final class FrontierPlanets {
                     s(ModBlocks.CRYSTAL_BLOCK), null, 2);
             case STELLAR -> new Palette(s(ModBlocks.SOLAR_SLAG), s(ModBlocks.SOLAR_SLAG), s(ModBlocks.SOLAR_SLAG),
                     s(Blocks.MAGMA_BLOCK), lava, s(ModBlocks.SOLAR_PLASMA), s(ModBlocks.SOLAR_PLASMA), null, 3);
+            // Terran surfaces are chosen per local biome in PlanetColumns; this is the temperate default.
+            case TERRAN -> new Palette(s(Blocks.GRASS_BLOCK), s(Blocks.DIRT), s(Blocks.STONE), s(Blocks.DEEPSLATE), water, null,
+                    s(Blocks.SAND), null, 3);
+            case VOLCANIC -> new Palette(s(ModBlocks.SCORCHED_ROCK), s(Blocks.BASALT), s(Blocks.BLACKSTONE), deep, lava, null,
+                    s(Blocks.MAGMA_BLOCK), null, 3);
+            case STORM -> new Palette(s(Blocks.GRASS_BLOCK), s(Blocks.DIRT), s(Blocks.STONE), s(Blocks.DEEPSLATE), water, null,
+                    s(Blocks.GRAVEL), null, 3);
         };
         BlockState alt = switch (type) {
             case JUNGLE, GRASSLAND -> rng.chance(0.5) ? s(ModBlocks.ALIEN_SOIL) : null;
@@ -334,6 +368,8 @@ public final class FrontierPlanets {
             case FUNGAL -> s(Blocks.MYCELIUM);
             case TOXIC -> s(Blocks.MUD);
             case OCEAN -> s(Blocks.GRAVEL);
+            case VOLCANIC -> rng.chance(0.5) ? s(ModBlocks.ASH_BLOCK) : s(Blocks.TUFF);
+            case STORM -> s(Blocks.COARSE_DIRT);
             default -> null;
         };
         b.palette(alt == null ? p : p.withAlt(alt));
@@ -341,6 +377,22 @@ public final class FrontierPlanets {
 
     private static void ores(PlanetProfile.Builder b, Hash.Rng rng, PlanetType type) {
         double richness = rng.range(0.6, 1.8);
+        if (type == PlanetType.TERRAN || type == PlanetType.STORM) {
+            // Earth-like rock carries Earth's ores, deepslate variants and all.
+            b.ore(new OreSpec(s(Blocks.COAL_ORE), s(Blocks.DEEPSLATE_COAL_ORE), 16 * richness, 14, 0, 220));
+            b.ore(new OreSpec(s(Blocks.IRON_ORE), s(Blocks.DEEPSLATE_IRON_ORE), 12 * richness, 9, -60, 180));
+            b.ore(new OreSpec(s(Blocks.COPPER_ORE), s(Blocks.DEEPSLATE_COPPER_ORE), 9 * richness, 10, -20, 110));
+            b.ore(new OreSpec(s(Blocks.GOLD_ORE), s(Blocks.DEEPSLATE_GOLD_ORE), 3 * richness, 8, -60, 40));
+            b.ore(new OreSpec(s(Blocks.REDSTONE_ORE), s(Blocks.DEEPSLATE_REDSTONE_ORE), 5 * richness, 8, -60, 20));
+            b.ore(new OreSpec(s(Blocks.LAPIS_ORE), s(Blocks.DEEPSLATE_LAPIS_ORE), 2 * richness, 7, -40, 40));
+            b.ore(new OreSpec(s(Blocks.DIAMOND_ORE), s(Blocks.DEEPSLATE_DIAMOND_ORE), rng.range(0.8, 2.4) * richness, 6, -60, 16));
+            b.ore(new OreSpec(s(Blocks.EMERALD_ORE), s(Blocks.DEEPSLATE_EMERALD_ORE), rng.range(1.0, 3.0), 3, 60, 360));
+            b.ore(new OreSpec(s(ModBlocks.EXOTIC_ORE), s(ModBlocks.DEEP_EXOTIC_ORE), rng.range(2.0, 4.0), 6, -60, 130));
+            if (rng.chance(0.1)) {
+                b.ore(new OreSpec(s(ModBlocks.PLUTONITE_ORE), null, rng.range(0.4, 1.5), 4, -60, 30));
+            }
+            return;
+        }
         b.ore(new OreSpec(s(ModBlocks.ALIEN_COAL_ORE), null, 14 * richness, 12, 0, 160));
         b.ore(new OreSpec(s(ModBlocks.ALIEN_IRON_ORE), null, 10 * richness, 9, -60, 120));
         b.ore(new OreSpec(s(ModBlocks.ALIEN_COPPER_ORE), null, 8 * richness, 10, -20, 110));
@@ -355,7 +407,7 @@ public final class FrontierPlanets {
         if (type == PlanetType.ICE || type == PlanetType.TUNDRA) {
             b.ore(new OreSpec(s(ModBlocks.CRYONITE_ORE), null, rng.range(2, 6), 6, -60, 120));
         }
-        if (type == PlanetType.LAVA || type == PlanetType.ASH) {
+        if (type == PlanetType.LAVA || type == PlanetType.ASH || type == PlanetType.VOLCANIC) {
             b.ore(new OreSpec(s(ModBlocks.PYROCITE_ORE), null, rng.range(2, 6), 6, -60, 120));
         }
         if (type == PlanetType.GAS_GIANT) {
@@ -380,6 +432,12 @@ public final class FrontierPlanets {
         }
         if (b.describedLakes() != null) {
             sb.append(' ').append(b.describedLakes());
+        }
+        if (b.islands() > 0) {
+            sb.append(" Floating isles drift above its surface.");
+        }
+        for (Hazard h : b.hazards()) {
+            sb.append(' ').append(h.description);
         }
         return sb.toString();
     }
@@ -430,29 +488,34 @@ public final class FrontierPlanets {
         }
         int climate = climate(temp);
 
-        // ---- mountains: 30% flat, 25% hills, 25% ranges, 15% alpine, 5% titanic
+        // ---- mountains: 15% flat, 20% hills, 30% ranges, 22% alpine, 13% titanic
         double roll = rng.nextDouble();
         double mountains;
-        if (roll < 0.30) {
+        if (roll < 0.15) {
             mountains = 0.0;
-        } else if (roll < 0.55) {
-            mountains = rng.range(0.15, 0.35);
-        } else if (roll < 0.80) {
-            mountains = rng.range(0.45, 0.75);
-        } else if (roll < 0.95) {
-            mountains = rng.range(0.8, 1.05);
+        } else if (roll < 0.35) {
+            mountains = rng.range(0.2, 0.4);
+        } else if (roll < 0.65) {
+            mountains = rng.range(0.5, 0.85);
+        } else if (roll < 0.87) {
+            mountains = rng.range(0.9, 1.2);
         } else {
-            mountains = rng.range(1.1, 1.35);
+            mountains = rng.range(1.25, 1.6);
         }
         mountains *= switch (type) {
             case DUNE_SEA, OCEAN, TOXIC, FUNGAL -> 0.45;
-            case GRASSLAND, CRATERED, DESERT -> 0.7;
+            case GRASSLAND, CRATERED, DESERT, STORM -> 0.7;
             case BARREN_ROCK, CRYSTAL, ICE, LAVA, CANYON, TUNDRA -> 1.2;
+            case TERRAN -> 1.15;
             default -> 1.0;
         };
-        mountains = Math.min(1.4, mountains);
+        if (type == PlanetType.TERRAN) {
+            // Earth-like worlds always get real mountain ranges to explore.
+            mountains = Math.max(mountains, rng.range(0.55, 0.8));
+        }
+        mountains = Math.min(1.6, mountains);
         b.mountains(Math.round(mountains * 100) / 100.0);
-        b.describeMountains(mountains > 1.05 ? "Titanic peaks tear at the sky."
+        b.describeMountains(mountains > 1.2 ? "Titanic peaks tear at the sky."
                 : mountains > 0.75 ? "Alpine ranges cut the horizon."
                 : mountains > 0.4 ? "Rugged ranges divide its lowlands." : null);
 
@@ -473,6 +536,11 @@ public final class FrontierPlanets {
         double dustHue = rng.chance(sandy ? 0.2 : 0.6) ? stoneHue + rng.range(-0.06, 0.06) : rng.range(0.04, 0.14);
         b.dust(NameGenerator.hsv(dustHue, rng.range(0.1, 0.45), Math.min(1.0, 0.66 + 0.32 * brightness)));
 
+        boolean earthlike = type == PlanetType.TERRAN || type == PlanetType.STORM;
+        if (earthlike) {
+            // Vanilla stone is never tinted; keep exotic ore and alien stone bricks close to it.
+            b.stoneTint(NameGenerator.hsv(stoneHue, 0.04, 0.92));
+        }
         PlanetProfile.Palette pal = b.palette();
         if (pal != null && pal.stone() != null && pal.stone().getBlock() == ModBlocks.ALIEN_STONE && rng.chance(0.3)) {
             // A few worlds are built from recognisable rock instead of tinted alien stone.
@@ -494,7 +562,7 @@ public final class FrontierPlanets {
         b.cliffs(rocky ? rng.range(1.05, 1.45) : rng.range(1.5, 2.3));
         if (type == PlanetType.CANYON) {
             b.strata(canyonBands());
-        } else if ((rocky || mountains > 0.6) && rng.chance(0.4)) {
+        } else if ((rocky || mountains > 0.6) && !earthlike && rng.chance(0.4)) {
             BlockState[] pool = brightness < -0.2
                     ? new BlockState[]{s(Blocks.BLACKSTONE), s(Blocks.BASALT), s(Blocks.TUFF), s(ModBlocks.SCORCHED_ROCK), pal.stone()}
                     : brightness > 0.3
@@ -511,10 +579,14 @@ public final class FrontierPlanets {
         // ---- snow line from a lapse rate of roughly 0.35 degrees per block
         if (climate != CLIMATE_SCORCHING && climate != CLIMATE_HOT && type != PlanetType.ICE) {
             int line = (int) Math.round(b.baseHeight() + (temp + 3.0) / 0.35);
+            if (type == PlanetType.TERRAN) {
+                // Earth-like worlds keep their snow for the high peaks.
+                line = (int) Math.round(b.baseHeight() + 150 + temp * 4.0);
+            }
             if (type == PlanetType.TUNDRA) {
                 line = Math.min(line, b.snowLine());
             }
-            if (line < 300) {
+            if (line < 440) {
                 b.snowLine(Math.max(b.baseHeight() - 16, line));
                 if (pal.snow() == null) {
                     pal = pal.withSnow(climate == CLIMATE_FROZEN && rng.chance(0.4) ? s(ModBlocks.NITROGEN_ICE) : s(Blocks.SNOW_BLOCK));
@@ -558,7 +630,7 @@ public final class FrontierPlanets {
                     BlockState bed = rng.pick(new BlockState[]{s(Blocks.CLAY), s(Blocks.GRAVEL), s(Blocks.MUD), shore});
                     lakes = new PlanetProfile.Lakes(water, null, shore, bed, chance, null, null, null, 0.0);
                     lakeText = "Its valleys are strung with lakes.";
-                    if (rng.chance(0.18)) {
+                    if (rng.chance(0.18) && type != PlanetType.TERRAN) {
                         lakes = lakes.mixed(lava, s(Blocks.BASALT), s(Blocks.BLACKSTONE), rng.range(0.15, 0.35));
                         lakeText = "Water and lava lie side by side in its basins.";
                     }
@@ -594,8 +666,94 @@ public final class FrontierPlanets {
         if (type == PlanetType.OCEAN || type == PlanetType.DUNE_SEA && climate != CLIMATE_SCORCHING) {
             lakes = lakes == null ? null : lakes.withChance(lakes.chance() * 0.4);
         }
+        if (type == PlanetType.VOLCANIC) {
+            lakes = new PlanetProfile.Lakes(lava, s(Blocks.OBSIDIAN), s(Blocks.BASALT), s(Blocks.MAGMA_BLOCK), rng.range(0.3, 0.55),
+                    null, null, null, 0.0);
+            lakeText = "Lava lakes smoulder between its volcanoes.";
+        }
         b.lakes(lakes);
         b.describeLakes(lakes == null ? null : lakeText);
+    }
+
+    // ------------------------------------------------------------------ hazards
+
+    /**
+     * Natural disasters. Storm worlds always spawn tornadoes and volcanic worlds always erupt; elsewhere
+     * each hazard is a roll that depends on what the world is made of - tsunamis need a sea, tornadoes
+     * need air and open ground, meteors need a thin sky.
+     */
+    private static void hazards(PlanetProfile.Builder b, Hash.Rng rng, PlanetType type, boolean atmosphere) {
+        boolean sea = b.palette() != null && b.palette().fluid() != null && b.palette().fluid().getBlock() == Blocks.WATER
+                && b.seaLevel() > -40;
+        double tornado = switch (type) {
+            case STORM -> 1.0;
+            case GRASSLAND -> 0.55;
+            case TERRAN -> 0.3;
+            case DESERT, DUNE_SEA -> 0.4;
+            case CANYON, TUNDRA -> 0.2;
+            default -> 0.0;
+        };
+        double tsunami = !sea ? 0.0 : switch (type) {
+            case OCEAN -> 0.75;
+            case TERRAN -> 0.35;
+            case JUNGLE, TOXIC -> 0.25;
+            case STORM, GRASSLAND, TUNDRA -> 0.2;
+            default -> 0.1;
+        };
+        double eruption = switch (type) {
+            case VOLCANIC -> 1.0;
+            case LAVA -> 0.6;
+            case ASH -> 0.55;
+            case OCEAN -> 0.25;
+            case TERRAN -> 0.2;
+            case ICE, CANYON, TOXIC -> 0.1;
+            default -> 0.0;
+        };
+        double meteors = switch (type) {
+            case CRATERED, BARREN_ROCK, SHATTERED -> 0.45;
+            case CRYSTAL, VOLCANIC -> 0.2;
+            case ICE, DESERT -> 0.12;
+            default -> 0.05;
+        };
+        double lightning = switch (type) {
+            case STORM -> 1.0;
+            case VOLCANIC -> 0.4;
+            case JUNGLE, TERRAN, OCEAN -> 0.3;
+            case GRASSLAND, TOXIC -> 0.25;
+            default -> 0.0;
+        };
+        if (!atmosphere) {
+            tornado = 0;
+            lightning = 0;
+            meteors = Math.max(meteors, 0.35);
+        }
+        if (rng.chance(tornado)) {
+            b.hazard(Hazard.TORNADOES);
+        }
+        if (rng.chance(tsunami)) {
+            b.hazard(Hazard.TSUNAMIS);
+        }
+        if (rng.chance(eruption)) {
+            b.hazard(Hazard.ERUPTIONS);
+            b.volcanism(type == PlanetType.VOLCANIC ? 1.0 : rng.range(0.3, 0.6));
+        } else if (type == PlanetType.VOLCANIC) {
+            b.volcanism(1.0);
+        }
+        if (rng.chance(meteors)) {
+            b.hazard(Hazard.METEORS);
+        }
+        if (rng.chance(lightning)) {
+            b.hazard(Hazard.LIGHTNING);
+        }
+        double islands = switch (type) {
+            case TERRAN, CRYSTAL -> 0.3;
+            case JUNGLE, FUNGAL, GRASSLAND -> 0.2;
+            case OCEAN, STORM, TOXIC -> 0.12;
+            default -> 0.0;
+        };
+        if (rng.chance(islands)) {
+            b.islands(Math.round(rng.range(0.3, 0.9) * 100) / 100.0);
+        }
     }
 
     private static double clamp(double v, double lo, double hi) {

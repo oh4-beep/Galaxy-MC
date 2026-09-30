@@ -14,7 +14,8 @@ import java.util.concurrent.ConcurrentHashMap;
  * <p>The disc is a 1536 x 1536 grid of 8-light-year sectors. Star density follows a four-armed
  * logarithmic spiral with a bright central bulge, perturbed by fractal Perlin noise so the arms fray
  * into clusters, voids and filaments instead of looking drawn with a compass. Each sector holds up to
- * four star slots; each star up to seven planets plus its own corona.
+ * eight star slots, and a thin sprinkling of field stars fills even the gaps between the arms; each
+ * star has up to seven planets plus its own corona.
  *
  * <p>The layout is purely a function of the galaxy seed, so nothing about it is ever saved: a star
  * visited once regenerates identically forever, and there is always another sector further out.
@@ -23,7 +24,7 @@ public final class Galaxy {
     private Galaxy() {}
 
     public static final int SECTORS = 1536;
-    public static final int SLOTS_PER_SECTOR = 4;
+    public static final int SLOTS_PER_SECTOR = 8;
     public static final int PLANET_SLOTS = 8;
     public static final double SECTOR_LY = 8.0;
     public static final int CENTER = SECTORS / 2;
@@ -67,7 +68,9 @@ public final class Galaxy {
         double disc = Math.exp(-r * 3.2) * 0.18;
         double clusters = Math.max(0.0, n.fbm(sx / 24.0, sz / 24.0, 4, 2.0, 0.55)) * 0.55;
         double d = (arms * 0.95 + bulge + disc) * (0.55 + clusters) * (1.0 - Math.pow(r, 6));
-        return Math.max(0.0, Math.min(0.95, d));
+        // Crowded skies: arms are packed and a floor of field stars keeps the inter-arm voids explorable.
+        d = d * 1.7 + 0.06 * (1.0 - r * r);
+        return Math.max(0.0, Math.min(0.97, d));
     }
 
     /** The star in a slot, or null when the slot is empty. */

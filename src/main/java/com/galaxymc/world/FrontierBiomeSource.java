@@ -2,7 +2,9 @@ package com.galaxymc.world;
 
 import com.galaxymc.GalaxyMC;
 import com.galaxymc.galaxy.FrontierMap;
+import com.galaxymc.galaxy.FrontierPlanets;
 import com.galaxymc.galaxy.PlanetProfile;
+import com.galaxymc.galaxy.PlanetType;
 import com.mojang.serialization.MapCodec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import java.util.List;
@@ -15,8 +17,8 @@ import net.minecraft.world.level.biome.Climate;
 
 /**
  * Biomes for the frontier. Frontier biomes carry only atmosphere (sky, fog, water colour, weather and
- * ambient particles); terrain comes from the planet. Each planet picks one "sky" by index, and the
- * void between planets is deep space.
+ * ambient particles); terrain comes from the planet. Each planet picks one "sky" by index (Terran
+ * worlds pick one per local climate), and the void between planets is deep space.
  */
 public class FrontierBiomeSource extends BiomeSource {
     public static final MapCodec<FrontierBiomeSource> CODEC = RecordCodecBuilder.mapCodec(i -> i.group(
@@ -51,6 +53,12 @@ public class FrontierBiomeSource extends BiomeSource {
         }
         if (p.radius > 0 && FrontierMap.distanceFromCenter(x, z) > p.radius + 160) {
             return list.get(0);
+        }
+        if (p.type == PlanetType.TERRAN) {
+            // Earth-like worlds carry a whole climate map: forests, taiga, deserts and jungles each get
+            // their own sky, grass colour and weather.
+            int index = FrontierPlanets.indexOf(TerrainShaper.of(p).terranBiomeAt(x, z).sky);
+            return list.get(Math.min(index, list.size() - 1));
         }
         return list.get(Math.min(p.biomeIndex, list.size() - 1));
     }

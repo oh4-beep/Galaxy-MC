@@ -39,7 +39,8 @@ import net.minecraft.world.level.levelgen.blending.Blender;
  * <p>The {@code planet} field names a Sol body ("moon", "mars", ...) or "frontier", in which case the
  * planet is looked up per chunk from the galaxy map. Generation happens in a single pass per chunk
  * into a local buffer: base terrain from {@link TerrainShaper}, then cheese caves, then Perlin-worm
- * tunnels, then ore blobs, and finally a copy into the chunk sections with heightmap updates. Surface
+ * tunnels, then ore blobs, then sky islands, and finally a copy into the chunk sections with heightmap
+ * updates. Surface
  * decoration (flora, crystals, ruins) runs later in {@link #applyBiomeDecoration}.
  */
 public class PlanetChunkGenerator extends ChunkGenerator {
@@ -127,9 +128,9 @@ public class PlanetChunkGenerator extends ChunkGenerator {
         return PlanetColumns.surfaceY(p, shaper, x, z);
     }
 
-    /** One column of terrain (no caves, no ores), indexed from MIN_Y; null entries are air. */
+    /** One column of terrain (no caves, ores or sky islands), indexed from MIN_Y; null entries are air. */
     private void fillColumn(PlanetProfile p, TerrainShaper shaper, int x, int z, BlockState[] out) {
-        PlanetColumns.fill(p, shaper, x, z, out);
+        PlanetColumns.fillTerrain(p, shaper, x, z, out);
     }
 
     // ------------------------------------------------------------------ chunk fill
@@ -216,6 +217,20 @@ public class PlanetChunkGenerator extends ChunkGenerator {
             carveWorms(p, shaper, buf, surface, wet, x0, z0);
         }
         placeOres(p, buf, x0, z0, chunk.getPos().x(), chunk.getPos().z());
+        if (!shaper.isVolumetric() && p.islands > 0) {
+            // Sky islands go in after the caves so no tunnel ever breaks out through one.
+            for (int lx = 0; lx < 16; lx++) {
+                for (int lz = 0; lz < 16; lz++) {
+                    java.util.Arrays.fill(column, null);
+                    PlanetColumns.islands(p, shaper, x0 + lx, z0 + lz, surface[lx * 16 + lz], column);
+                    for (int i = 0; i < HEIGHT; i++) {
+                        if (column[i] != null && buf[index(lx, i, lz)] == null) {
+                            buf[index(lx, i, lz)] = column[i];
+                        }
+                    }
+                }
+            }
+        }
         write(chunk, buf, x0, z0);
     }
 
@@ -458,7 +473,7 @@ public class PlanetChunkGenerator extends ChunkGenerator {
             return null;
         }
         BlockState[] column = new BlockState[HEIGHT];
-        fillColumn(p, TerrainShaper.of(p), x, z, column);
+        PlanetColumns.fill(p, TerrainShaper.of(p), x, z, column);
         for (int i = HEIGHT - 1; i >= 0; i--) {
             if (column[i] != null) {
                 return new Object[]{column[i], i + MIN_Y};

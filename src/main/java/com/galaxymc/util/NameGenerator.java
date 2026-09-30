@@ -1,5 +1,7 @@
 package com.galaxymc.util;
 
+import com.galaxymc.galaxy.PlanetType;
+
 /**
  * Procedural naming for stars, planets, minerals and creature strains.
  *
@@ -90,17 +92,64 @@ public final class NameGenerator {
         };
     }
 
-    /** Planets either inherit the star name with a numeral or, sometimes, earn a name of their own. */
-    public static String planetName(long seed, String starName, int orbit) {
+    private static final String[] PLANET_EPITHETS = {
+            "Prime", "Minor", "Major", "Deep", "Verge", "Rest", "Reach", "Hollow", "Crown", "Drift", "Landing", "Gate",
+            "Watch", "Expanse", "Beacon", "Secundus", "Tertius", "Ultima"
+    };
+    private static final String[] PLANET_PREFIXES = {"New ", "Old ", "Far ", "Lost ", "High ", "Little ", "Great ", "Saint ", "Nova "};
+
+    /** Epithets that hint at what a world is like, keyed by archetype. */
+    private static String[] flavour(PlanetType type) {
+        return switch (type) {
+            case TERRAN -> new String[]{"Haven", "Eden", "Garden", "Arcadia", "Terra", "Gaia", "Hearth", "Meadow", "Homestead", "Idyll"};
+            case GRASSLAND -> new String[]{"Meadow", "Pastures", "Steppe", "Prairie", "Fields"};
+            case OCEAN -> new String[]{"Tide", "Mere", "Abyss", "Shoals", "Fathom", "Lagoon"};
+            case VOLCANIC, LAVA -> new String[]{"Pyre", "Forge", "Crucible", "Cinder", "Caldera", "Inferno"};
+            case ASH -> new String[]{"Cinder", "Ashfall", "Soot", "Pyre"};
+            case STORM -> new String[]{"Gale", "Tempest", "Squall", "Thunderhead", "Maelstrom", "Cyclone"};
+            case ICE, TUNDRA -> new String[]{"Rime", "Frost", "Glacier", "Hoarfrost", "Floe", "Tundra"};
+            case DESERT, DUNE_SEA -> new String[]{"Dunes", "Waste", "Sands", "Erg", "Mirage"};
+            case CANYON -> new String[]{"Mesa", "Gorge", "Chasm", "Butte"};
+            case JUNGLE -> new String[]{"Verdance", "Wilds", "Canopy", "Thicket", "Tangle"};
+            case CRYSTAL -> new String[]{"Prism", "Facet", "Gleam", "Geode"};
+            case FUNGAL -> new String[]{"Spore", "Bloom", "Mycel", "Gill"};
+            case TOXIC -> new String[]{"Mire", "Miasma", "Blight", "Fen"};
+            case GAS_GIANT -> new String[]{"Colossus", "Titan", "Leviathan", "Behemoth"};
+            case CRATERED, BARREN_ROCK -> new String[]{"Scar", "Remnant", "Cairn", "Crag"};
+            case SHATTERED -> new String[]{"Shard", "Remnant", "Rubble", "Splinter"};
+            case STELLAR -> new String[]{"Corona"};
+        };
+    }
+
+    /**
+     * Every planet gets a name of its own (its star's name is shown beside it anyway): a bare alien word,
+     * or one dressed with an epithet, a prefix or a hint of what kind of world it is.
+     */
+    public static String planetName(long seed, String starName, int orbit, PlanetType type) {
         Hash.Rng rng = new Hash.Rng(seed ^ 0x504C414EL);
-        if (rng.chance(0.4)) {
-            String own = word(rng.nextLong(), rng.nextInt(2, 3));
-            if (rng.chance(0.25)) {
-                own = own + " " + rng.pick(new String[]{"Prime", "Secundus", "Minor", "Deep", "Verge", "Rest"});
-            }
-            return own;
+        String base = word(rng.nextLong(), rng.chance(0.65) ? 2 : 3);
+        String shortBase = word(rng.nextLong(), 1 + rng.nextInt(2));
+        double form = rng.nextDouble();
+        String name;
+        if (form < 0.38) {
+            name = base;
+        } else if (form < 0.54) {
+            name = base + " " + rng.pick(PLANET_EPITHETS);
+        } else if (form < 0.72) {
+            name = base + " " + rng.pick(flavour(type));
+        } else if (form < 0.82) {
+            name = rng.pick(PLANET_PREFIXES) + base;
+        } else if (form < 0.9) {
+            name = shortBase + "'s " + rng.pick(flavour(type));
+        } else if (form < 0.96) {
+            name = shortBase + "-" + word(rng.nextLong(), 2);
+        } else {
+            name = base + " " + rng.pick(GREEK);
         }
-        return starName + " " + ROMAN[Math.max(0, Math.min(ROMAN.length - 1, orbit - 1))];
+        if (name.equalsIgnoreCase(starName)) {
+            name = name + " " + roman(orbit);
+        }
+        return name;
     }
 
     public static String mineralName(long seed) {

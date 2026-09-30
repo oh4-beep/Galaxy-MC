@@ -26,8 +26,14 @@ def empty_spawners():
                             "water_ambient", "water_creature"]}
 
 
+# Planet worlds are 576 blocks tall (y -64 to 511) so mountain ranges and volcanoes have room to rise.
+WORLD_HEIGHT = 576
+# Night skies on other worlds are twice as starry as Earth's.
+STAR_BOOST = 2.0
+
+
 def biome(sky, fog, water="#3f76e4", water_fog=None, stars=0.0, particles=None, fog_end=None, fog_start=None,
-          precipitation=False, temperature=0.8, clouds=None, cloud_height=None, sunrise=None):
+          precipitation=False, temperature=0.8, clouds=None, cloud_height=None, sunrise=None, downfall=None):
     attrs = {
         "minecraft:visual/sky_color": sky,
         "minecraft:visual/fog_color": fog,
@@ -53,7 +59,7 @@ def biome(sky, fog, water="#3f76e4", water_fog=None, stars=0.0, particles=None, 
     return {
         "has_precipitation": precipitation,
         "temperature": temperature,
-        "downfall": 0.4 if precipitation else 0.0,
+        "downfall": downfall if downfall is not None else (0.4 if precipitation else 0.0),
         "carvers": [],
         "effects": {"water_color": water},
         "attributes": attrs,
@@ -105,6 +111,18 @@ FRONTIER_SKIES = [
     ("snow", biome("#b8d0e8", "#d8e8f8", water="#80a8e0", particles=[("minecraft:snowflake", 0.02)],
                    precipitation=True, temperature=-0.5)),
     ("aurora", biome("#1a3a4a", "#2a6a6a", water="#20a0a0", stars=0.7, particles=[("minecraft:end_rod", 0.003)])),
+    # Terran climates: temperature and downfall pick the vanilla grass and foliage colours, and whether
+    # it rains or snows.
+    ("terran", biome("#78a7ff", "#c0d8ff", precipitation=True, temperature=0.75, downfall=0.7)),
+    ("terran_boreal", biome("#7ba4ff", "#c0d8ff", water="#3d57d6", precipitation=True, temperature=0.25, downfall=0.8)),
+    ("terran_frozen", biome("#7fa1ff", "#d0e0ff", water="#3938c9", precipitation=True, temperature=0.0, downfall=0.5)),
+    ("terran_arid", biome("#6eb1ff", "#e0d8b8", water="#44aff5", temperature=2.0, downfall=0.0)),
+    ("terran_tropical", biome("#77a8ff", "#c0e0d0", water="#14a2c5", precipitation=True, temperature=0.95, downfall=0.9)),
+    ("storm", biome("#4a5566", "#6a7484", water="#3a5a7a", precipitation=True, temperature=0.7, downfall=0.6,
+                    clouds="#40485080", cloud_height=160, fog_end=280)),
+    ("volcanic", biome("#5a2a20", "#3a2018", water="#5a4030", temperature=1.5,
+                       particles=[("minecraft:ash", 0.03), ("minecraft:white_ash", 0.01), ("minecraft:lava", 0.0006)],
+                       fog_start=8, fog_end=200, sunrise="#c04020ff")),
 ]
 
 
@@ -122,12 +140,28 @@ def planet_timeline(vanilla_dir):
         track = dict(track)
         if key == "minecraft:visual/star_brightness":
             track["modifier"] = "maximum"
+            track["keyframes"] = boost_stars(track["keyframes"])
         tracks[key] = track
     return {
         "clock": "minecraft:overworld",
         "period_ticks": day["period_ticks"],
         "tracks": tracks,
     }
+
+
+def boost_stars(keyframes):
+    return [dict(k, value=round(min(1.0, k["value"] * STAR_BOOST), 3)) for k in keyframes]
+
+
+def boost_existing_timeline():
+    """Applies the star boost to an already generated timeline (when vanilla data is not at hand)."""
+    path = os.path.join(ROOT, "timeline", "planet_day.json")
+    with open(path) as f:
+        timeline = json.load(f)
+    track = timeline["tracks"]["minecraft:visual/star_brightness"]
+    if max(k["value"] for k in track["keyframes"]) < 1.0:
+        track["keyframes"] = boost_stars(track["keyframes"])
+        write("timeline/planet_day.json", timeline)
 
 
 def dimension_type(stellar=False):
@@ -151,9 +185,9 @@ def dimension_type(stellar=False):
         "has_ceiling": False,
         "has_ender_dragon_fight": False,
         "has_skylight": True,
-        "height": 384,
+        "height": WORLD_HEIGHT,
         "infiniburn": "#minecraft:infiniburn_overworld",
-        "logical_height": 384,
+        "logical_height": WORLD_HEIGHT,
         "min_y": -64,
         "monster_spawn_block_light_limit": 0,
         "monster_spawn_light_level": 0,
@@ -174,6 +208,8 @@ def main():
     vanilla = sys.argv[1] if len(sys.argv) > 1 else None
     if vanilla:
         write("timeline/planet_day.json", planet_timeline(vanilla))
+    else:
+        boost_existing_timeline()
     write("dimension_type/planet.json", dimension_type())
     write("dimension_type/stellar.json", dimension_type(stellar=True))
 

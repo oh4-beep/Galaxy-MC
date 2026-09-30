@@ -22,7 +22,14 @@
         "galaxy_mc:frontier_gold",
         "galaxy_mc:frontier_inferno",
         "galaxy_mc:frontier_snow",
-        "galaxy_mc:frontier_aurora"
+        "galaxy_mc:frontier_aurora",
+        "galaxy_mc:frontier_terran",
+        "galaxy_mc:frontier_terran_boreal",
+        "galaxy_mc:frontier_terran_frozen",
+        "galaxy_mc:frontier_terran_arid",
+        "galaxy_mc:frontier_terran_tropical",
+        "galaxy_mc:frontier_storm",
+        "galaxy_mc:frontier_volcanic"
       ]
     }
   }

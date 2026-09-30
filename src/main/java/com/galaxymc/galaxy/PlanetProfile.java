@@ -1,7 +1,10 @@
 package com.galaxymc.galaxy;
 
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.EnumSet;
 import java.util.List;
+import java.util.Set;
 import net.minecraft.world.level.block.state.BlockState;
 
 /**
@@ -121,6 +124,12 @@ public final class PlanetProfile {
     public final BlockState[] strata;
     /** Tint of the dust layer (alien sand, regolith, soil) on the client. */
     public final int dustTint;
+    /** Natural disasters this world throws at visitors. */
+    public final Set<Hazard> hazards;
+    /** Coverage of floating sky-islands, 0 (none) .. 1 (an archipelago in the sky). */
+    public final double islands;
+    /** How volcanic the world is, 0 (no volcanoes) .. 1 (a volcano every few hundred blocks). */
+    public final double volcanism;
 
     private PlanetProfile(Builder b) {
         this.id = b.id;
@@ -161,6 +170,13 @@ public final class PlanetProfile {
         this.lakes = b.lakes;
         this.strata = b.strata == null ? null : b.strata.clone();
         this.dustTint = b.dustTint;
+        this.hazards = Collections.unmodifiableSet(b.hazards.isEmpty() ? EnumSet.noneOf(Hazard.class) : EnumSet.copyOf(b.hazards));
+        this.islands = b.islands;
+        this.volcanism = b.volcanism;
+    }
+
+    public boolean has(Hazard hazard) {
+        return hazards.contains(hazard);
     }
 
     public boolean isFrontier() {
@@ -218,6 +234,9 @@ public final class PlanetProfile {
         private int dustTint = 0xffffff;
         private String mountainText;
         private String lakeText;
+        private final Set<Hazard> hazards = EnumSet.noneOf(Hazard.class);
+        private double islands = 0.0;
+        private double volcanism = 0.0;
 
         private Builder(String id, String name, PlanetType type, long seed) {
             this.id = id;
@@ -260,6 +279,13 @@ public final class PlanetProfile {
         public Builder strata(BlockState... v) { strata = v; return this; }
         public Builder dust(int tint) { dustTint = tint; return this; }
         public Builder stoneTint(int tint) { stoneTint = tint; return this; }
+        public Builder hazard(Hazard... v) { hazards.addAll(List.of(v)); return this; }
+        public Builder islands(double v) { islands = v; return this; }
+        public Builder volcanism(double v) { volcanism = v; return this; }
+        public Set<Hazard> hazards() { return hazards; }
+        public double islands() { return islands; }
+        public double volcanism() { return volcanism; }
+        public double mountains() { return mountains; }
         public Builder describeMountains(String v) { mountainText = v; return this; }
         public Builder describeLakes(String v) { lakeText = v; return this; }
         public String describedMountains() { return mountainText; }

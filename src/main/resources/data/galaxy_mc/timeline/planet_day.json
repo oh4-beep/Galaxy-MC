@@ -172,7 +172,7 @@
       "keyframes": [
         {
           "ticks": 92,
-          "value": 0.037
+          "value": 0.074
         },
         {
           "ticks": 627,
@@ -184,39 +184,39 @@
         },
         {
           "ticks": 11732,
-          "value": 0.016
+          "value": 0.032
         },
         {
           "ticks": 11959,
-          "value": 0.044
+          "value": 0.088
         },
         {
           "ticks": 12399,
-          "value": 0.143
+          "value": 0.286
         },
         {
           "ticks": 12729,
-          "value": 0.258
+          "value": 0.516
         },
         {
           "ticks": 13228,
-          "value": 0.5
+          "value": 1.0
         },
         {
           "ticks": 22772,
-          "value": 0.5
+          "value": 1.0
         },
         {
           "ticks": 23032,
-          "value": 0.364
+          "value": 0.728
         },
         {
           "ticks": 23356,
-          "value": 0.225
+          "value": 0.45
         },
         {
           "ticks": 23758,
-          "value": 0.101
+          "value": 0.202
         }
       ],
       "modifier": "maximum"

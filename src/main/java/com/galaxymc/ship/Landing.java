@@ -7,6 +7,7 @@ import com.galaxymc.galaxy.Planets;
 import com.galaxymc.galaxy.SolarSystem;
 import com.galaxymc.world.ModDimensions;
 import com.galaxymc.world.PlanetChunkGenerator;
+import com.galaxymc.world.TerrainShaper;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
@@ -103,6 +104,11 @@ public final class Landing {
         for (int[] o : probes) {
             int px = x + o[0];
             int pz = z + o[1];
+            PlanetProfile here = gen.planetAt(px, pz);
+            if (here != null && TerrainShaper.of(here).islandMask(px, pz) > 0.0) {
+                // Never set a ship down on (or under) a sky island.
+                return Integer.MAX_VALUE;
+            }
             NoiseColumn column = gen.getBaseColumn(px, pz, level, level.getChunkSource().randomState());
             int y = surface(level, gen, px, pz);
             if (y <= level.getMinY() + 12) {

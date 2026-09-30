@@ -20,6 +20,8 @@ import java.util.concurrent.ConcurrentHashMap;
  *   <li><b>Mountain ranges</b> - a broad massif mask decides where ranges rise; inside it, warped
  *   ridged multifractal draws knife-edge spines and valleys. The planet's {@code mountains} trait
  *   scales this from nothing to titanic peaks that brush the build limit.</li>
+ *   <li><b>Volcanoes</b> - on volcanic worlds, great stratovolcanoes with lava-filled summit craters,
+ *   one per few-hundred-block cell. Each crater's lava line sits below the lowest point of its rim.</li>
  *   <li><b>Lake basins</b> - scattered per 224-block cell. Each basin's water line is chosen from the
  *   lowest point of its rim, the bowl is carved beneath it and a berm is raised wherever the rim dips
  *   below it, so every lake is sealed and never spills when fluids start ticking.</li>
@@ -31,8 +33,10 @@ public final class TerrainShaper {
     public static final int NO_LAKE = Integer.MIN_VALUE;
     public static final int LAKE_CELL = 224;
     /** Build ceiling for terrain; peaks are squashed smoothly towards it rather than sliced flat. */
-    private static final double PEAK_SOFT = 262.0;
-    private static final double PEAK_HARD = 300.0;
+    private static final double PEAK_SOFT = 400.0;
+    private static final double PEAK_HARD = 470.0;
+    /** Height of the tallest ranges at a mountains trait of 1.0. */
+    private static final double RANGE_HEIGHT = 235.0;
 
     public final PlanetProfile profile;
     private final PlanetType type;
@@ -45,14 +49,32 @@ public final class TerrainShaper {
     private final Noise island;
     private final Noise massif;
     private final Noise shoreline;
+    private final Noise climateT;
+    private final Noise climateH;
     private final long seed;
     private final double f;
     private final Map<Long, Lake> lakes = new ConcurrentHashMap<>();
     private final double lakeCell;
+    private final Map<Long, Volcano> volcanoes = new ConcurrentHashMap<>();
+    private final double volcanoCell;
+    private final Map<Long, TerranBiome> terranBiomes = new ConcurrentHashMap<>();
 
     /** One inland basin. {@code kind} 0 uses the primary lake fluid, 1 the secondary. */
     public record Lake(double x, double z, double radius, int level, double depth, int kind) {
         static final Lake NONE = new Lake(0, 0, 0, NO_LAKE, 0, 0);
+    }
+
+    /**
+     * One stratovolcano. {@code height} is the cone's rise above the surrounding ground; the summit crater
+     * holds lava up to {@code lavaLevel} (absolute y), which lies below the lowest point of its rim.
+     */
+    public record Volcano(double x, double z, double radius, double height, double craterRadius, double craterDepth,
+                          int lavaLevel, long seed) {
+        static final Volcano NONE = new Volcano(0, 0, 0, 0, 0, 0, NO_LAKE, 0);
+
+        public boolean exists() {
+            return radius > 0;
+        }
     }
 
     /** Result of sampling one column: final height plus the lake it belongs to, if any. */
@@ -63,12 +85,18 @@ public final class TerrainShaper {
         public int lakeKind;
         /** True within the lake's shoreline zone (for beaches and berms). */
         public boolean lakeShore;
+        /** Distance from the nearest volcano's centre over its radius (0..1), or 2 when on no volcano. */
+        public double volcano = 2.0;
+        /** Lava line of the volcanic crater covering this column, or {@link #NO_LAKE}. */
+        public int craterLava = NO_LAKE;
 
         void reset() {
             height = 0;
             lakeLevel = NO_LAKE;
             lakeKind = 0;
             lakeShore = false;
+            volcano = 2.0;
+            craterLava = NO_LAKE;
         }
     }
 
@@ -85,8 +113,11 @@ public final class TerrainShaper {
         this.island = new Noise(Hash.of(seed, 7));
         this.massif = new Noise(Hash.of(seed, 8));
         this.shoreline = new Noise(Hash.of(seed, 9));
+        this.climateT = new Noise(Hash.of(seed, 10));
+        this.climateH = new Noise(Hash.of(seed, 11));
         this.f = profile.frequency;
         this.lakeCell = LAKE_CELL * (profile.lakes == null ? 1.0 : profile.lakes.scale());
+        this.volcanoCell = 600.0 / Math.sqrt(Math.max(0.05, profile.volcanism));
     }
 
     public static TerrainShaper of(PlanetProfile profile) {
@@ -117,7 +148,10 @@ public final class TerrainShaper {
         if (out != null) {
             out.reset();
         }
-        double h = landHeight(x, z);
+        double h = groundHeight(x, z);
+        if (profile.volcanism > 0 && !isVolumetric()) {
+            h += volcanoes(x, z, out);
+        }
         if (profile.lakes != null && !isVolumetric()) {
             h = applyLakes(x, z, h, out);
         }
@@ -128,8 +162,17 @@ public final class TerrainShaper {
         return h;
     }
 
-    /** Archetype shape plus mountain ranges: the terrain before any lake is carved into it. */
+    /** Archetype shape, mountain ranges and volcanoes: the terrain before any lake is carved into it. */
     public double landHeight(double x, double z) {
+        double h = groundHeight(x, z);
+        if (profile.volcanism > 0 && !isVolumetric()) {
+            h += volcanoes(x, z, null);
+        }
+        return h;
+    }
+
+    /** Archetype shape plus mountain ranges: the ground volcanoes are built on. */
+    private double groundHeight(double x, double z) {
         return archetype(x, z) + mountains(x, z);
     }
 
@@ -235,6 +278,34 @@ public final class TerrainShaper {
                 h = river(x, z, h, profile.seaLevel - 2);
             }
             case STELLAR -> h = base + c * a * 0.9 + d * 6.0 + Math.max(0, ridge.ridged(wx / 200.0, wz / 200.0, 3, 2.0, 0.5) - 0.5) * a;
+            case TERRAN -> {
+                // Continents and seas: the continental field decides land from ocean, hills roll across the
+                // land (never the sea floor), coasts stay gentle and rivers wind down to the sea.
+                double land = (c - 0.07) * a * 1.6;
+                double inland = Noise.smoothstep(0.0, 0.25, c - 0.07);
+                double hills = ridge.ridged(wx / (380.0 / f), wz / (380.0 / f), 3, 2.0, 0.5) * a * 0.35 * inland;
+                double plateau = terraceSoft(Math.max(0, feature.fbm(x / 900.0 - 17, z / 900.0 + 41, 2, 2.0, 0.5) - 0.18) * a * 1.4, 8.0, 0.5);
+                h = base + land + hills + plateau * inland + d * 6.0;
+                h = river(x, z, h, profile.seaLevel - 3);
+            }
+            case VOLCANIC -> {
+                double r = ridge.ridged(wx / (420.0 / f), wz / (420.0 / f), 4, 2.0, 0.5);
+                h = base + c * a * 0.6 + r * a * 0.45 + d * 4.0;
+                // Old lava channels: shallow braided troughs across the plains.
+                double channel = Math.abs(feature.fbm(x / 260.0, z / 260.0, 3, 2.0, 0.5));
+                if (channel < 0.035) {
+                    h -= (0.035 - channel) / 0.035 * 5.0;
+                }
+            }
+            case STORM -> {
+                // Tornado alley: wide rolling prairie broken by the odd butte.
+                h = base + c * a * 0.6 + d * 3.0 + feature.billow(x / 90.0, z / 90.0, 2, 2.0, 0.5) * 3.0;
+                double butte = Noise.smoothstep(0.56, 0.6, ridge.fbm(x / 180.0, z / 180.0, 2, 2.0, 0.5) + 0.5);
+                h += terrace(butte * a * 1.6, 6.0);
+                if (profile.seaLevel > PlanetColumns.MIN_Y + 16) {
+                    h = river(x, z, h, profile.seaLevel - 2);
+                }
+            }
             default -> h = base + c * a * 0.5 + d * 4.0;
         }
         return h;
@@ -262,7 +333,217 @@ public final class TerrainShaper {
         double peaks = Math.pow(spine, 2.1);
         double foothills = (massif.fbm(x / (210.0 * s) + 300, z / (210.0 * s) - 300, 3, 2.0, 0.5) * 0.5 + 0.5) * 0.24;
         double rough = detail.fbm(x / 34.0, z / 34.0, 2, 2.0, 0.5) * 0.04;
-        return Math.pow(mask, 1.5) * (peaks * 1.1 + foothills + rough) * 190.0 * scale;
+        return Math.pow(mask, 1.5) * (peaks * 1.1 + foothills + rough) * RANGE_HEIGHT * scale;
+    }
+
+    // ------------------------------------------------------------------ volcanoes
+
+    /** The stratovolcano (if any) owned by volcano cell (cx, cz). Computed once and cached. */
+    public Volcano volcanoInCell(int cx, int cz) {
+        long key = ((long) cx << 32) ^ (cz & 0xFFFFFFFFL);
+        Volcano cached = volcanoes.get(key);
+        if (cached != null) {
+            return cached;
+        }
+        Volcano v = buildVolcano(cx, cz);
+        if (volcanoes.size() > 4096) {
+            volcanoes.clear();
+        }
+        volcanoes.put(key, v);
+        return v;
+    }
+
+    private Volcano buildVolcano(int cx, int cz) {
+        long h = Hash.of(seed ^ 0x5354524FL, cx, cz);
+        double v = profile.volcanism;
+        if (v <= 0 || Hash.unit(h) >= 0.3 + 0.4 * v) {
+            return Volcano.NONE;
+        }
+        double px = (cx + 0.25 + Hash.unit(h, 1) * 0.5) * volcanoCell;
+        double pz = (cz + 0.25 + Hash.unit(h, 2) * 0.5) * volcanoCell;
+        double radius = volcanoCell * (0.2 + Hash.unit(h, 3) * 0.1);
+        if (profile.radius > 0 && FrontierMap.distanceFromCenter(px, pz) + radius > profile.radius - PlanetColumns.RIM - 24) {
+            return Volcano.NONE;
+        }
+        double height = radius * (0.8 + Hash.unit(h, 4) * 0.6) * (0.6 + 0.4 * v);
+        double crater = Math.max(9.0, radius * (0.1 + Hash.unit(h, 5) * 0.05));
+        double depth = Math.max(8.0, crater * (0.5 + Hash.unit(h, 6) * 0.35));
+        // The lava line: three blocks below the lowest point of the (capped) rim, so craters never spill.
+        double rimCone = height * Math.pow(1.0 - crater / radius, 1.4);
+        double minRim = Double.MAX_VALUE;
+        for (int i = 0; i < 20; i++) {
+            double ang = i * (Math.PI * 2.0 / 20.0);
+            double rx = px + Math.cos(ang) * crater;
+            double rz = pz + Math.sin(ang) * crater;
+            minRim = Math.min(minRim, capPeaks(groundHeight(rx, rz) + rimCone));
+        }
+        int lava = (int) Math.floor(minRim) - 3;
+        if (lava > PEAK_HARD - 8 || lava < PlanetColumns.MIN_Y + 24) {
+            lava = NO_LAKE;
+        }
+        return new Volcano(px, pz, radius, height, crater, depth, lava, h);
+    }
+
+    /** Height the volcanoes add to a column; fills {@code out} with crater and flank information. */
+    private double volcanoes(double x, double z, Column out) {
+        int cx = (int) Math.floor(x / volcanoCell);
+        int cz = (int) Math.floor(z / volcanoCell);
+        double best = 0.0;
+        for (int i = -1; i <= 1; i++) {
+            for (int j = -1; j <= 1; j++) {
+                Volcano v = volcanoInCell(cx + i, cz + j);
+                if (!v.exists()) {
+                    continue;
+                }
+                double d = Math.hypot(x - v.x(), z - v.z());
+                if (d >= v.radius()) {
+                    continue;
+                }
+                double t = d / v.radius();
+                double tc = v.craterRadius() / v.radius();
+                double cone;
+                if (t < tc) {
+                    double rim = v.height() * Math.pow(1.0 - tc, 1.4);
+                    cone = rim - v.craterDepth() * (1.0 - Math.pow(t / tc, 3.0));
+                } else {
+                    cone = v.height() * Math.pow(1.0 - t, 1.4);
+                    // Radial gullies and old flows roughen the flanks, fading out towards the rim.
+                    double rough = detail.fbm(x / 26.0 + 5.1, z / 26.0 - 8.3, 2, 2.0, 0.5);
+                    cone *= 1.0 + 0.1 * rough * Noise.smoothstep(tc + 0.05, tc + 0.3, t);
+                }
+                if (cone > best) {
+                    best = cone;
+                    if (out != null) {
+                        out.volcano = t;
+                        out.craterLava = t < tc ? v.lavaLevel() : NO_LAKE;
+                    }
+                }
+            }
+        }
+        return best;
+    }
+
+    /** Every volcano whose centre lies within {@code range} blocks of a point (for eruptions). */
+    public java.util.List<Volcano> volcanoesNear(double x, double z, double range) {
+        java.util.List<Volcano> out = new java.util.ArrayList<>();
+        if (profile.volcanism <= 0 || isVolumetric()) {
+            return out;
+        }
+        int r = (int) Math.ceil(range / volcanoCell) + 1;
+        int cx = (int) Math.floor(x / volcanoCell);
+        int cz = (int) Math.floor(z / volcanoCell);
+        for (int i = -r; i <= r; i++) {
+            for (int j = -r; j <= r; j++) {
+                Volcano v = volcanoInCell(cx + i, cz + j);
+                if (v.exists() && Math.hypot(x - v.x(), z - v.z()) <= range) {
+                    out.add(v);
+                }
+            }
+        }
+        return out;
+    }
+
+    // ------------------------------------------------------------------ terran climate
+
+    /**
+     * Local biome of a Terran world at a column of height {@code h}. Temperature follows the planet's
+     * mean, a continental-scale noise field and altitude; rainfall is a second field. Rivers, beaches and
+     * seas come from the terrain itself.
+     */
+    public TerranBiome terranBiome(double x, double z, double h) {
+        int sea = profile.seaLevel;
+        double temp = (profile.baseTemp - 14.0) / 22.0 + climateT.fbm(x / 1100.0, z / 1100.0, 3, 2.0, 0.5) * 1.5
+                - Math.max(0.0, h - 100.0) / 110.0;
+        double rain = climateH.fbm(x / 900.0, z / 900.0, 3, 2.0, 0.5) * 1.5;
+        double variety = feature.fbm(x / 340.0 + 71.0, z / 340.0 - 13.0, 2, 2.0, 0.5);
+        if (h < sea - 1) {
+            return temp < -0.85 ? TerranBiome.FROZEN_OCEAN : TerranBiome.OCEAN;
+        }
+        if (h <= sea + 1 && Math.abs(feature.fbm(x / 520.0, z / 520.0, 3, 2.0, 0.5)) < 0.05) {
+            return TerranBiome.RIVER;
+        }
+        if (h <= sea + 2) {
+            return temp < -0.7 ? TerranBiome.SNOWY_BEACH : TerranBiome.BEACH;
+        }
+        if (h > 230) {
+            return temp < 0.1 ? TerranBiome.SNOWY_PEAKS : TerranBiome.STONY_PEAKS;
+        }
+        if (h > 165) {
+            if (temp < -0.55) {
+                return TerranBiome.SNOWY_TAIGA;
+            }
+            return rain > 0.25 && variety > 0.0 ? TerranBiome.CHERRY_GROVE : TerranBiome.MEADOW;
+        }
+        if (temp < -0.75) {
+            return rain > 0.0 ? TerranBiome.SNOWY_TAIGA : TerranBiome.SNOWY_PLAINS;
+        }
+        if (temp < -0.3) {
+            return rain > 0.35 ? TerranBiome.OLD_GROWTH_TAIGA : TerranBiome.TAIGA;
+        }
+        if (temp < 0.4) {
+            if (rain < -0.4) {
+                return variety > 0.25 ? TerranBiome.SUNFLOWER_PLAINS : TerranBiome.PLAINS;
+            }
+            if (rain < -0.1) {
+                return variety > 0.3 ? TerranBiome.FLOWER_FOREST : variety < -0.3 ? TerranBiome.MEADOW : TerranBiome.PLAINS;
+            }
+            if (rain < 0.3) {
+                return variety > 0.1 ? TerranBiome.BIRCH_FOREST : TerranBiome.FOREST;
+            }
+            if (rain < 0.55 || h > sea + 14) {
+                return TerranBiome.DARK_FOREST;
+            }
+            return TerranBiome.SWAMP;
+        }
+        if (temp < 0.8) {
+            if (rain < -0.2) {
+                return TerranBiome.SAVANNA;
+            }
+            if (rain < 0.35) {
+                return variety > 0.0 ? TerranBiome.FOREST : TerranBiome.PLAINS;
+            }
+            return h < sea + 8 && rain > 0.7 ? TerranBiome.SWAMP : TerranBiome.JUNGLE;
+        }
+        if (rain < 0.1) {
+            return variety > 0.35 ? TerranBiome.BADLANDS : TerranBiome.DESERT;
+        }
+        return rain < 0.45 ? TerranBiome.SAVANNA : TerranBiome.JUNGLE;
+    }
+
+    /** {@link #terranBiome} for a column, computing (and caching) its height; for biome sources. */
+    public TerranBiome terranBiomeAt(int x, int z) {
+        long key = ((long) (x >> 2) << 32) ^ ((z >> 2) & 0xFFFFFFFFL);
+        TerranBiome cached = terranBiomes.get(key);
+        if (cached != null) {
+            return cached;
+        }
+        TerranBiome b = terranBiome(x, z, sample(x, z, null));
+        if (terranBiomes.size() > 65536) {
+            terranBiomes.clear();
+        }
+        terranBiomes.put(key, b);
+        return b;
+    }
+
+    // ------------------------------------------------------------------ floating islands
+
+    /**
+     * Sky-island mask in [0, 1] for a column: 0 where there is no island overhead. Islands cluster into
+     * archipelagos and thin out towards their edges, so each one is a rounded, flat-topped mesa of rock.
+     */
+    public double islandMask(double x, double z) {
+        if (profile.islands <= 0 || isVolumetric()) {
+            return 0.0;
+        }
+        double n = island.fbm(x / 170.0, z / 170.0, 3, 2.0, 0.5);
+        double cluster = island.fbm(x / 900.0 + 400.0, z / 900.0 - 400.0, 2, 2.0, 0.5);
+        double threshold = 0.34 - 0.2 * profile.islands - 0.2 * cluster;
+        return Noise.clamp((n - threshold) * 4.0, 0.0, 1.0);
+    }
+
+    /** Altitude of the island layer's midline at a column. */
+    public double islandBase(double x, double z) {
+        return profile.seaLevel + 150.0 + island.fbm(x / 600.0 - 90.0, z / 600.0 + 90.0, 2, 2.0, 0.5) * 60.0;
     }
 
     private static double rotX(double x, double z, double ang) {
@@ -396,6 +677,13 @@ public final class TerrainShaper {
                 return Lake.NONE;
             }
         }
+        if (profile.volcanism > 0) {
+            for (Volcano v : volcanoesNear(px, pz, volcanoCell * 1.5)) {
+                if (Math.hypot(px - v.x(), pz - v.z()) < v.radius() + radius * 1.6) {
+                    return Lake.NONE;
+                }
+            }
+        }
         double centre = landHeight(px, pz);
         double minRim = Double.MAX_VALUE;
         double maxRim = -Double.MAX_VALUE;
@@ -495,6 +783,11 @@ public final class TerrainShaper {
     /** Low-frequency 2D noise used for surface variation (patches, flora density), in [-1, 1]. */
     public double patch(double x, double z) {
         return feature.fbm(x / 48.0 + 311.0, z / 48.0 - 97.0, 2, 2.0, 0.5);
+    }
+
+    /** Winding flow lines in [0, 1] (0 on a flow): the glowing lava streams down a volcano's flanks. */
+    public double lavaFlow(double x, double z) {
+        return Math.abs(feature.fbm(x / 55.0 + 13.0, z / 55.0 - 7.0, 3, 2.0, 0.5));
     }
 
     /** Thin crack network in [0, 1] (0 on a crack): lava veins, crevasse lines, salt polygons. */

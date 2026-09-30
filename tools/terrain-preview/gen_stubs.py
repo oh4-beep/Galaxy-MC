@@ -23,6 +23,8 @@ COLORS = {
     "GRAVEL": 0x837f7e, "ICE": 0x91b7fd, "MAGMA_BLOCK": 0xc85a1a, "MUD": 0x3c3a3e, "MYCELIUM": 0x6f6265,
     "OBSIDIAN": 0x14121e, "PACKED_ICE": 0x8db4fa, "RED_SAND": 0xbe6621, "SANDSTONE": 0xd8cb9b, "SMOOTH_BASALT": 0x48484e,
     "SNOW_BLOCK": 0xf4fcfc, "TERRACOTTA": 0x985e43, "TUFF": 0x6c6d66,
+    "GRASS_BLOCK": 0x6aa84f, "DIRT": 0x866043, "SAND": 0xdbcfa3, "PODZOL": 0x5a3f1c, "COARSE_DIRT": 0x77553b,
+    "MOSS_BLOCK": 0x596e2d,
     "DYED_TERRACOTTA_orange": 0xa2531f, "DYED_TERRACOTTA_yellow": 0xba8523, "DYED_TERRACOTTA_brown": 0x4d3323,
     "DYED_TERRACOTTA_red": 0x8f3d2e, "DYED_TERRACOTTA_white": 0xd1b2a1, "DYED_TERRACOTTA_lightGray": 0x876b62,
     # Galaxy MC blocks
