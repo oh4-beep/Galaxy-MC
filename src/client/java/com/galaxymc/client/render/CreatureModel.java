@@ -24,7 +24,7 @@ public class CreatureModel extends EntityModel<CreatureRenderState> {
         super(root);
         this.worm = worm;
         Map<String, ModelPart> parts = new HashMap<>();
-        for (CreatureModelData.Part p : data.parts()) {
+        for (CreatureModelData.Part p : data.parts) {
             ModelPart parent = "root".equals(p.parent()) ? root : parts.getOrDefault(p.parent(), root);
             ModelPart part = parent.getChild(p.name());
             parts.put(p.name(), part);

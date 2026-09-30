@@ -11,22 +11,14 @@ import net.minecraft.world.entity.player.Inventory;
 /** Stellar Forge: gear and a procedural mineral in, infused gear out, at one XP level per mineral tier. */
 public class StellarForgeScreen extends AbstractContainerScreen<StellarForgeMenu> {
     public StellarForgeScreen(StellarForgeMenu menu, Inventory inventory, Component title) {
-        super(menu, inventory, title);
-        this.imageWidth = 176;
-        this.imageHeight = 166;
+        super(menu, inventory, title, 176, 166);
         this.titleLabelY = -10000;
         this.inventoryLabelY = -10000;
     }
 
     @Override
-    public void extractRenderState(GuiGraphicsExtractor g, int mouseX, int mouseY, float delta) {
-        extractBackground(g, mouseX, mouseY, delta);
-        super.extractRenderState(g, mouseX, mouseY, delta);
-        extractTooltip(g, mouseX, mouseY);
-    }
-
-    @Override
     public void extractBackground(GuiGraphicsExtractor g, int mouseX, int mouseY, float delta) {
+        super.extractBackground(g, mouseX, mouseY, delta);
         int x = leftPos;
         int y = topPos;
         Ui.panel(g, x, y, imageWidth, imageHeight);

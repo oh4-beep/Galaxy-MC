@@ -69,9 +69,8 @@ public class NavigationScreen extends AbstractContainerScreen<NavigationMenu> {
     private String lastQuery = "";
 
     public NavigationScreen(NavigationMenu menu, Inventory inventory, Component title) {
-        super(menu, inventory, title);
-        this.imageWidth = 320;
-        this.imageHeight = 232;
+        // 26.2 fixes the panel size at construction; hit-testing (and "clicked outside" item drops) use it.
+        super(menu, inventory, title, 320, 232);
         // Titles are drawn by this screen in its own colours; park the vanilla labels off-screen.
         this.titleLabelY = -10000;
         this.inventoryLabelY = -10000;
@@ -239,13 +238,12 @@ public class NavigationScreen extends AbstractContainerScreen<NavigationMenu> {
                     && (ship().interstellar || selected.sameSystem());
             launchButton.setMessage(Component.translatable(menu.launching() ? "screen.galaxy_mc.nav.launching" : "screen.galaxy_mc.nav.launch"));
         }
-        extractBackground(g, mouseX, mouseY, delta);
         super.extractRenderState(g, mouseX, mouseY, delta);
-        extractTooltip(g, mouseX, mouseY);
     }
 
     @Override
     public void extractBackground(GuiGraphicsExtractor g, int mouseX, int mouseY, float delta) {
+        super.extractBackground(g, mouseX, mouseY, delta);
         int x = leftPos;
         int y = topPos;
         Ui.panel(g, x, y, imageWidth, imageHeight);

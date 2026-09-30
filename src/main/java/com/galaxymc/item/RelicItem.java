@@ -10,6 +10,7 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
+import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.EntityTypes;
@@ -77,8 +78,10 @@ public class RelicItem extends Item {
             case NOVA -> {
                 for (LivingEntity e : around(level, player, 4 + lv)) {
                     Vec3 away = e.position().subtract(player.position()).normalize();
-                    e.knockback(1.2 + lv * 0.25, -away.x, -away.z);
-                    e.hurtServer(level, level.damageSources().playerAttack(player), 3 + lv * 1.5F);
+                    DamageSource source = level.damageSources().playerAttack(player);
+                    float damage = 3 + lv * 1.5F;
+                    e.knockback(1.2 + lv * 0.25, -away.x, -away.z, source, damage);
+                    e.hurtServer(level, source, damage);
                 }
                 level.sendParticles(ParticleTypes.SONIC_BOOM, player.getX(), player.getY() + 1, player.getZ(), 1, 0, 0, 0, 0);
                 Voices.play(level, player.blockPosition(), "entity.warden.sonic_boom", SoundSource.PLAYERS, 0.8F, 1.3F);

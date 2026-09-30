@@ -191,7 +191,7 @@ public final class LaunchControl {
                 continue;
             }
             BlockPos pos = ShipBlueprint.place(anchor, cell.pos(), console.rotation());
-            if (level.random.nextDouble() < 0.35 + intensity) {
+            if (level.getRandom().nextDouble() < 0.35 + intensity) {
                 level.sendParticles(ParticleTypes.FLAME, pos.getX() + 0.5, pos.getY() - 0.2, pos.getZ() + 0.5,
                         2 + (int) (intensity * 6), 0.25, 0.1, 0.25, 0.02 + intensity * 0.08);
                 level.sendParticles(ParticleTypes.CAMPFIRE_COSY_SMOKE, pos.getX() + 0.5, pos.getY() - 0.5, pos.getZ() + 0.5,
@@ -293,8 +293,8 @@ public final class LaunchControl {
         for (Snapshot s : snapshot) {
             BlockPos pos = oldAnchor.offset(s.offset());
             BlockEntity be = from.getBlockEntity(pos);
-            if (be != null) {
-                Clearable.tryClear(be);
+            if (be instanceof Clearable clearable) {
+                clearable.clearContent();
             }
             from.setBlock(pos, Blocks.AIR.defaultBlockState(), PLACE_FLAGS);
         }
