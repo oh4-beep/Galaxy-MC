@@ -24,7 +24,11 @@
     "fabric-api": "*"
   },
   "mixins": [
-    "galaxy_mc.mixins.json"
+    "galaxy_mc.mixins.json",
+    {
+      "config": "galaxy_mc.client.mixins.json",
+      "environment": "client"
+    }
   ],
   "icon": "assets/galaxy_mc/icon.png"
 }
