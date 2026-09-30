@@ -223,7 +223,7 @@ public class PlanetChunkGenerator extends ChunkGenerator {
                         TerrainShaper.Column col = cols[lx * 16 + lz];
                         PlanetColumns.fill(p, shaper, x0 + lx, z0 + lz, PlanetColumns.floorY(h), slope, col, column);
                         wet[lx * 16 + lz] = col.lakeLevel != TerrainShaper.NO_LAKE || col.lakeShore
-                                || (p.palette.fluid() != null && h < p.seaLevel + 1);
+                                || col.craterLava != TerrainShaper.NO_LAKE || (p.palette.fluid() != null && h < p.seaLevel + 1);
                     }
                     surface[lx * 16 + lz] = copyColumn(column, buf, lx, lz);
                 }

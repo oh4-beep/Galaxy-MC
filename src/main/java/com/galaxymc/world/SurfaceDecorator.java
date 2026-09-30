@@ -438,7 +438,8 @@ public final class SurfaceDecorator {
             case BARREN_ROCK, CANYON, DESERT, TERRAN, STORM, CRATERED, ICE -> true;
             default -> false;
         };
-        if (rocky && random.nextInt(6) == 0) {
+        // Dripstone needs water seeping through the rock, so only worlds with air get it.
+        if (rocky && p.atmosphere && random.nextInt(6) == 0) {
             for (int i = 0; i < 8; i++) {
                 int x = x0 + random.nextInt(16);
                 int z = z0 + random.nextInt(16);
